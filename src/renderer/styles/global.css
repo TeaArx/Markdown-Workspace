@@ -138,6 +138,68 @@ button {
   -webkit-app-region: drag;
 }
 
+.window-titlebar {
+  position: absolute;
+  inset: 0 138px auto 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--window-titlebar-height);
+  padding: 0 12px 0 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--panel) 72%, var(--bg));
+  color: var(--muted-strong);
+  -webkit-app-region: drag;
+}
+
+.window-titlebar__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.window-titlebar__button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-strong);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.window-titlebar__button:hover {
+  border-color: var(--border);
+  background: var(--panel-muted);
+  color: var(--text);
+}
+
+.window-titlebar__icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  -webkit-app-region: no-drag;
+}
+
+.window-titlebar__title {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-view .window-titlebar {
+  padding-left: 12px;
+}
+
 .workspace {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;

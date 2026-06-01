@@ -1,5 +1,6 @@
 import { BrowserWindow, shell } from "electron";
 
+import { windowIconPath } from "../assets";
 import { readSettings, updateSettings } from "../ipc/settingsHandlers";
 import { getWindowShellOptions } from "./titleBar";
 
@@ -35,6 +36,7 @@ export function createMainWindow({
     minHeight: 700,
     show: false,
     title: "Markdown Workspace",
+    icon: windowIconPath,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,

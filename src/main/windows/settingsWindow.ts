@@ -1,5 +1,6 @@
 import { BrowserWindow, shell } from "electron";
 
+import { windowIconPath } from "../assets";
 import { readSettings } from "../ipc/settingsHandlers";
 import { getWindowShellOptions } from "./titleBar";
 
@@ -44,6 +45,7 @@ export function createSettingsWindow(
     modal: false,
     title: "Settings",
     resizable: true,
+    icon: windowIconPath,
 
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,

@@ -12,6 +12,10 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.markdown-workspace.app');
+}
+
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
 
@@ -74,10 +78,6 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
-    if (process.platform === 'win32') {
-      app.setAppUserModelId('com.markdown-workspace.app');
-    }
-
     registerAppHandlers();
     registerSettingsHandlers();
     registerFileHandlers();

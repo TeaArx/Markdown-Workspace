@@ -1,5 +1,10 @@
 <template>
   <section class="settings-view">
+    <div class="window-titlebar" aria-label="Панель окна">
+      <img class="window-titlebar__icon" :src="appIcon" alt="" aria-hidden="true" />
+      <strong class="window-titlebar__title">Настройки</strong>
+    </div>
+
     <header class="settings-header">
       <div>
         <h1>Настройки</h1>
@@ -95,6 +100,7 @@
 <script setup lang="ts">
 import { onMounted, reactive } from "vue";
 
+import appIcon from "../../../assets/icon.png";
 import { useSettingsStore } from "../stores/settingsStore";
 
 const settingsStore = useSettingsStore();

@@ -2,6 +2,30 @@
   <Settings v-if="isSettingsRoute" />
 
   <div v-else class="app-shell">
+    <div class="window-titlebar" aria-label="Панель окна">
+      <div class="window-titlebar__nav">
+        <button
+          class="window-titlebar__button"
+          type="button"
+          title="Назад"
+          aria-label="Назад"
+          @click="router.go(-1)"
+        >
+          ‹
+        </button>
+        <button
+          class="window-titlebar__button"
+          type="button"
+          title="Вперёд"
+          aria-label="Вперёд"
+          @click="router.go(1)"
+        >
+          ›
+        </button>
+      </div>
+      <img class="window-titlebar__icon" :src="appIcon" alt="" aria-hidden="true" />
+      <strong class="window-titlebar__title">Markdown Workspace</strong>
+    </div>
     <Sidebar />
 
     <main class="workspace">
@@ -16,6 +40,7 @@
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 
+import appIcon from "../../assets/icon.png";
 import Sidebar from "./components/Sidebar.vue";
 import StatusBar from "./components/StatusBar.vue";
 import Toolbar from "./components/Toolbar.vue";
