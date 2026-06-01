@@ -19,15 +19,15 @@ function getTitleBarColors(settings: Pick<AppSettings, "theme">): Electron.Title
 
   if (theme === "dark") {
     return {
-      color: "#151b24",
-      symbolColor: "#f4f7fb",
+      color: "#171b1b",
+      symbolColor: "#f4f0e8",
       height: titleBarHeight,
     };
   }
 
   return {
-    color: "#eef1f5",
-    symbolColor: "#111827",
+    color: "#f3f1ec",
+    symbolColor: "#1e2422",
     height: titleBarHeight,
   };
 }
@@ -37,7 +37,7 @@ export function getWindowShellOptions(settings: Pick<AppSettings, "theme">): Bro
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
     titleBarOverlay: getTitleBarColors(settings),
-    backgroundColor: resolveTheme(settings) === "dark" ? "#151b24" : "#eef1f5",
+    backgroundColor: resolveTheme(settings) === "dark" ? "#171b1b" : "#f3f1ec",
   };
 }
 
@@ -46,7 +46,7 @@ export function applyWindowShellTheme(window: BrowserWindow, settings: Pick<AppS
     return;
   }
 
-  window.setBackgroundColor(resolveTheme(settings) === "dark" ? "#151b24" : "#eef1f5");
+  window.setBackgroundColor(resolveTheme(settings) === "dark" ? "#171b1b" : "#f3f1ec");
   window.setTitleBarOverlay(getTitleBarColors(settings));
 }
 
