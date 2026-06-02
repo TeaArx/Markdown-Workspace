@@ -11,7 +11,7 @@ const shellColors: Record<ResolvedTheme, { background: string; symbol: string }>
     symbol: "#f4f0e8",
   },
   light: {
-    background: "#edf1f3",
+    background: "#eef1f4",
     symbol: "#172126",
   },
 };

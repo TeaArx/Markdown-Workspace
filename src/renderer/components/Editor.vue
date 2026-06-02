@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 import { useEditorStore } from "../stores/editorStore";
 import { useSettingsStore } from "../stores/settingsStore";
@@ -195,6 +195,15 @@ const content = computed({
   get: () => editor.content,
   set: (value: string) => editor.setContent(value),
 });
+
+function clearAutosaveTimer(): void {
+  if (!autosaveTimer) {
+    return;
+  }
+
+  clearTimeout(autosaveTimer);
+  autosaveTimer = null;
+}
 
 function handleDrop(event: DragEvent): void {
   isDragging.value = false;
@@ -241,8 +250,54 @@ function handleKeydown(event: KeyboardEvent): void {
   event.preventDefault();
 
   const target = event.currentTarget as HTMLTextAreaElement;
+  updateTabIndent(target, event.shiftKey);
+}
+
+function updateTabIndent(target: HTMLTextAreaElement, isOutdent: boolean): void {
   const start = target.selectionStart;
   const end = target.selectionEnd;
+  const selectedText = editor.content.slice(start, end);
+
+  if (selectedText.includes("\n")) {
+    const lineStart = editor.content.lastIndexOf("\n", start - 1) + 1;
+    const selectedBlock = editor.content.slice(lineStart, end);
+    const lines = selectedBlock.split("\n");
+    const nextBlock = lines
+      .map((line) => (isOutdent ? line.replace(/^( {1,2}|\t)/, "") : `  ${line}`))
+      .join("\n");
+    const nextContent = `${editor.content.slice(0, lineStart)}${nextBlock}${editor.content.slice(end)}`;
+
+    editor.setContent(nextContent);
+
+    requestAnimationFrame(() => {
+      target.selectionStart = lineStart;
+      target.selectionEnd = lineStart + nextBlock.length;
+    });
+
+    return;
+  }
+
+  if (isOutdent) {
+    const lineStart = editor.content.lastIndexOf("\n", start - 1) + 1;
+    const prefix = editor.content.slice(lineStart, start);
+    const removableIndent = prefix.match(/( {1,2}|\t)$/)?.[0] ?? "";
+
+    if (!removableIndent) {
+      return;
+    }
+
+    const nextContent = `${editor.content.slice(0, start - removableIndent.length)}${editor.content.slice(end)}`;
+
+    editor.setContent(nextContent);
+
+    requestAnimationFrame(() => {
+      target.selectionStart = start - removableIndent.length;
+      target.selectionEnd = start - removableIndent.length;
+    });
+
+    return;
+  }
+
   const insert = "  ";
   const nextContent = `${editor.content.slice(0, start)}${insert}${editor.content.slice(end)}`;
 
@@ -308,8 +363,15 @@ async function insertMarkdown(snippet: MarkdownSnippet): Promise<void> {
 }
 
 watch(
-  () => editor.content,
+  () => [
+    editor.content,
+    editor.filePath,
+    editor.isDirty,
+    settingsStore.settings.autosave,
+  ],
   () => {
+    clearAutosaveTimer();
+
     if (
       !settingsStore.settings.autosave ||
       !editor.filePath ||
@@ -318,13 +380,11 @@ watch(
       return;
     }
 
-    if (autosaveTimer) {
-      clearTimeout(autosaveTimer);
-    }
-
     autosaveTimer = setTimeout(() => {
       void editor.save();
     }, 1200);
   },
 );
+
+onBeforeUnmount(clearAutosaveTimer);
 </script>

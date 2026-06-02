@@ -437,5 +437,9 @@ function loadFromDocument(): void {
   editor.statusMessage = "Диаграмма загружена из Markdown-файла";
 }
 
-onMounted(loadFromDocument);
+onMounted(() => {
+  if (findChartBlocks(editor.content).length) {
+    loadFromDocument();
+  }
+});
 </script>

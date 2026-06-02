@@ -1,7 +1,7 @@
 import { BrowserWindow, shell } from "electron";
 
 import { windowIconPath } from "../assets";
-import { readSettings, updateSettings } from "../ipc/settingsHandlers";
+import { readSettings, updateWindowBounds } from "../ipc/settingsHandlers";
 import { getWindowShellOptions } from "./titleBar";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
@@ -61,7 +61,7 @@ export function createMainWindow({
 
     saveBoundsTimer = setTimeout(() => {
       if (!mainWindow.isDestroyed()) {
-        updateSettings({ windowBounds: mainWindow.getBounds() });
+        updateWindowBounds(mainWindow.getBounds());
       }
     }, 300);
   };
@@ -76,7 +76,7 @@ export function createMainWindow({
   mainWindow.on("move", saveWindowBounds);
 
   mainWindow.on("close", (event) => {
-    updateSettings({ windowBounds: mainWindow.getBounds() });
+    updateWindowBounds(mainWindow.getBounds());
 
     if (!shouldQuit()) {
       event.preventDefault();

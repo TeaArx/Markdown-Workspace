@@ -59,6 +59,7 @@ const isSettingsRoute = computed(() => route.path === "/settings");
 
 let removeMenuListener: (() => void) | null = null;
 let removeSettingsListener: (() => void) | null = null;
+let removeSystemThemeListener: (() => void) | null = null;
 
 onMounted(async () => {
   await settingsStore.load();
@@ -70,6 +71,16 @@ onMounted(async () => {
   removeSettingsListener = window.electronAPI.onSettingsUpdated((settings) => {
     settingsStore.setSettings(settings);
   });
+
+  const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleSystemThemeChange = (): void => {
+    if (settingsStore.settings.theme === "system") {
+      settingsStore.applyToDocument();
+    }
+  };
+
+  colorSchemeQuery.addEventListener("change", handleSystemThemeChange);
+  removeSystemThemeListener = () => colorSchemeQuery.removeEventListener("change", handleSystemThemeChange);
 
   if (
     !isSettingsRoute.value &&
@@ -87,5 +98,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   removeMenuListener?.();
   removeSettingsListener?.();
+  removeSystemThemeListener?.();
 });
 </script>

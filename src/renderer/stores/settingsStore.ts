@@ -34,6 +34,25 @@ function toPlainSettingsPatch(patch: Partial<AppSettings>): Partial<AppSettings>
   return JSON.parse(JSON.stringify(patch)) as Partial<AppSettings>;
 }
 
+function mergeSettings(settings: AppSettings, patch: Partial<AppSettings>): AppSettings {
+  return {
+    ...settings,
+    ...patch,
+    windowBounds: patch.windowBounds
+      ? {
+          ...settings.windowBounds,
+          ...patch.windowBounds,
+        }
+      : settings.windowBounds,
+    defaultWindowBounds: patch.defaultWindowBounds
+      ? {
+          ...settings.defaultWindowBounds,
+          ...patch.defaultWindowBounds,
+        }
+      : settings.defaultWindowBounds,
+  };
+}
+
 function resolveEditorFontFamily(fontFamily: string): string {
   if (fontFamily === 'sans') {
     return 'Inter, ui-sans-serif, system-ui, sans-serif';
@@ -88,9 +107,17 @@ export const useSettingsStore = defineStore('settings', {
     },
 
     async update(patch: Partial<AppSettings>) {
-      const settings = await window.electronAPI.updateSettings(toPlainSettingsPatch(patch));
-      this.setSettings(settings);
-      return settings;
+      const previousSettings = this.settings;
+      this.setSettings(mergeSettings(this.settings, patch));
+
+      try {
+        const settings = await window.electronAPI.updateSettings(toPlainSettingsPatch(patch));
+        this.setSettings(settings);
+        return settings;
+      } catch (error) {
+        this.setSettings(previousSettings);
+        throw error;
+      }
     },
 
     async reset() {

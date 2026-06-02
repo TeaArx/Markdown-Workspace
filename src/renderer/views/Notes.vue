@@ -150,6 +150,19 @@ const selectedNote = computed(
   () => notes.value.find((note) => note.id === selectedId.value) ?? null,
 );
 
+const isDraftDirty = computed(() => {
+  if (!selectedNote.value) {
+    return false;
+  }
+
+  return (
+    draftTitle.value !== selectedNote.value.title ||
+    draftContent.value !== selectedNote.value.content ||
+    draftDone.value !== Boolean(selectedNote.value.done) ||
+    draftPinned.value !== Boolean(selectedNote.value.pinned)
+  );
+});
+
 function previewLine(content: string): string {
   const line = content.replace(/\s+/g, " ").trim();
   return line.length > 70
@@ -165,6 +178,16 @@ function fillDraft(note: NoteRecord): void {
   draftPinned.value = Boolean(note.pinned);
 }
 
+function confirmDiscardDraft(): boolean {
+  if (!isDraftDirty.value) {
+    return true;
+  }
+
+  return window.confirm(
+    "В заметке есть несохранённые изменения.\n\nПерейти без сохранения?",
+  );
+}
+
 async function loadNotes(): Promise<void> {
   notes.value = await window.electronAPI.notes.list();
 
@@ -174,6 +197,10 @@ async function loadNotes(): Promise<void> {
 }
 
 function selectNote(note: NoteRecord): void {
+  if (note.id !== selectedId.value && !confirmDiscardDraft()) {
+    return;
+  }
+
   fillDraft(note);
 }
 
@@ -200,6 +227,10 @@ function toggleSelectionMode(): void {
 }
 
 async function createNote(): Promise<void> {
+  if (!confirmDiscardDraft()) {
+    return;
+  }
+
   const note = await window.electronAPI.notes.create(
     "Новая заметка",
     "- Задача\n- Детали",
@@ -292,8 +323,7 @@ function sendToEditor(): void {
     return;
   }
 
-  editor.setContent(`# ${draftTitle.value}\n\n${draftContent.value}`);
-  editor.statusMessage = "Заметка скопирована в редактор";
+  editor.replaceWithDraft(draftTitle.value, `# ${draftTitle.value}\n\n${draftContent.value}`);
 }
 
 onMounted(() => {

@@ -290,6 +290,20 @@ export function updateSettings(patch: Partial<AppSettings>): AppSettings {
   return next;
 }
 
+export function updateWindowBounds(windowBounds: AppSettings['windowBounds']): AppSettings {
+  const current = readSettings();
+  const next = sanitizeSettings({
+    ...current,
+    windowBounds: {
+      ...current.windowBounds,
+      ...windowBounds,
+    },
+  });
+
+  writeSettings(next);
+  return next;
+}
+
 export function setLastFilePath(filePath: string | null): AppSettings {
   return updateSettings({ lastFilePath: filePath });
 }
