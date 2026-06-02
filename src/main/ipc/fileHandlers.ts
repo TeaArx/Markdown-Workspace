@@ -41,6 +41,54 @@ function assertSupportedPath(filePath: string): void {
   }
 }
 
+function isTextFilePath(filePath: string): boolean {
+  return path.extname(filePath).toLowerCase() === '.txt';
+}
+
+function hasLikelyMarkdownSyntax(content: string): boolean {
+  const markdownPatterns = [
+    /^#{1,6}\s+\S/m,
+    /^>\s+\S/m,
+    /^[-*+]\s+\S/m,
+    /^\d+\.\s+\S/m,
+    /(^|\n)```/,
+    /\*\*[^*\n]+\*\*/,
+    /(^|[^*])\*[^*\n]+\*([^*]|$)/,
+    /\[[^\]\n]+\]\([^)]+\)/,
+    /^\|.+\|$/m,
+    /^---\s*$/m,
+  ];
+
+  return markdownPatterns.some((pattern) => pattern.test(content));
+}
+
+async function confirmPlainTextMarkdownSave(
+  parentWindow: BrowserWindow | undefined,
+  filePath: string,
+  content: string,
+): Promise<boolean> {
+  if (!isTextFilePath(filePath) || !hasLikelyMarkdownSyntax(content)) {
+    return true;
+  }
+
+  const options: Electron.MessageBoxOptions = {
+    type: 'warning',
+    buttons: ['Сохранить как .txt', 'Отмена'],
+    defaultId: 1,
+    cancelId: 1,
+    title: 'Markdown в TXT',
+    message: 'Файл сохраняется как .txt',
+    detail:
+      'В .txt Markdown-символы останутся обычным текстом и не будут отображаться как форматирование в большинстве программ. Для предпросмотра и форматирования лучше сохранить файл как .md.',
+    noLink: true,
+  };
+  const result = parentWindow
+    ? await dialog.showMessageBox(parentWindow, options)
+    : await dialog.showMessageBox(options);
+
+  return result.response === 0;
+}
+
 function assertFilePath(value: unknown): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error('A valid file path is required.');
@@ -112,6 +160,13 @@ async function saveTextFile(payload: SaveFilePayload, parentWindow: BrowserWindo
   }
 
   assertSupportedPath(targetPath);
+
+  const shouldSave = await confirmPlainTextMarkdownSave(parentWindow, targetPath, payload.content);
+
+  if (!shouldSave) {
+    return null;
+  }
+
   await fs.writeFile(targetPath, payload.content, 'utf-8');
   setLastFilePath(targetPath);
 

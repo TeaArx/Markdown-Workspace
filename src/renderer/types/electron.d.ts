@@ -27,14 +27,24 @@ declare global {
   interface AppSettings {
     theme: ThemePreference;
     fontSize: number;
+    editorFontFamily: string;
+    editorLineHeight: number;
+    editorWordWrap: boolean;
+    previewFontSize: number;
+    previewLineHeight: number;
     windowBounds: {
       width: number;
       height: number;
       x?: number;
       y?: number;
     };
+    defaultWindowBounds: {
+      width: number;
+      height: number;
+    };
     lastFilePath: string | null;
     autosave: boolean;
+    openLastFileOnStart: boolean;
     pomodoroMinutes: number;
   }
 

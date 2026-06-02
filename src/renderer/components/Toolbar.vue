@@ -29,7 +29,7 @@
       </button>
     </div>
 
-    <div class="segmented" aria-label="Режим просмотра редактора">
+    <div v-if="isEditorRoute" class="segmented" aria-label="Режим просмотра редактора">
       <button
         v-for="mode in modes"
         :key="mode.value"
@@ -67,12 +67,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+
 import { useNotifications } from "../composables/useNotifications";
 import { useEditorStore } from "../stores/editorStore";
 
 const editor = useEditorStore();
 const notifications = useNotifications();
 const windowApi = window.electronAPI;
+const route = useRoute();
+const isEditorRoute = computed(() => route.name === "editor");
 
 const modes: Array<{ label: string; value: ViewMode }> = [
   { label: "Редактирование", value: "edit" },

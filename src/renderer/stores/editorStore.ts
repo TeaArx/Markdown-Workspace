@@ -27,10 +27,14 @@ export const useEditorStore = defineStore("editor", {
     viewMode: "split" as ViewMode,
     statusMessage: "Готово",
     isLoading: false,
+    undoStack: [] as string[],
+    redoStack: [] as string[],
   }),
 
   getters: {
     isDirty: (state) => state.content !== state.savedContent,
+    canUndo: (state) => state.undoStack.length > 0,
+    canRedo: (state) => state.redoStack.length > 0,
     wordCount: (state) =>
       state.content.trim().split(/\s+/).filter(Boolean).length,
     charCount: (state) => state.content.length,
@@ -38,8 +42,47 @@ export const useEditorStore = defineStore("editor", {
   },
 
   actions: {
-    setContent(content: string) {
+    resetHistory() {
+      this.undoStack = [];
+      this.redoStack = [];
+    },
+
+    setContent(content: string, trackHistory = true) {
+      if (content === this.content) {
+        return;
+      }
+
+      if (trackHistory) {
+        this.undoStack.push(this.content);
+        this.undoStack = this.undoStack.slice(-100);
+        this.redoStack = [];
+      }
+
       this.content = content;
+    },
+
+    undo() {
+      const previous = this.undoStack.pop();
+
+      if (previous === undefined) {
+        return;
+      }
+
+      this.redoStack.push(this.content);
+      this.content = previous;
+      this.statusMessage = "Отменено";
+    },
+
+    redo() {
+      const next = this.redoStack.pop();
+
+      if (next === undefined) {
+        return;
+      }
+
+      this.undoStack.push(this.content);
+      this.content = next;
+      this.statusMessage = "Возвращено";
     },
 
     setViewMode(mode: ViewMode) {
@@ -53,6 +96,7 @@ export const useEditorStore = defineStore("editor", {
       this.fileName = "untitled.md";
       this.lastSavedAt = null;
       this.statusMessage = "Новый документ";
+      this.resetHistory();
     },
 
     applyOpenedFile(file: OpenFileResult) {
@@ -61,6 +105,7 @@ export const useEditorStore = defineStore("editor", {
       this.filePath = file.path;
       this.fileName = file.name || getFileName(file.path);
       this.statusMessage = `Открыто: ${this.fileName}`;
+      this.resetHistory();
     },
 
     applySavedFile(file: SaveFileResult) {

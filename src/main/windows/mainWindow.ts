@@ -29,8 +29,13 @@ export function createMainWindow({
   shouldQuit,
 }: MainWindowOptions): BrowserWindow {
   const settings = readSettings();
+  const savedPosition = {
+    ...(typeof settings.windowBounds.x === "number" ? { x: settings.windowBounds.x } : {}),
+    ...(typeof settings.windowBounds.y === "number" ? { y: settings.windowBounds.y } : {}),
+  };
   const mainWindow = new BrowserWindow({
-    ...settings.windowBounds,
+    ...settings.defaultWindowBounds,
+    ...savedPosition,
     ...getWindowShellOptions(settings),
     minWidth: 1000,
     minHeight: 700,

@@ -5,6 +5,16 @@ import type { AppSettings } from "../ipc/settingsHandlers";
 type ResolvedTheme = "light" | "dark";
 
 const titleBarHeight = 32;
+const shellColors: Record<ResolvedTheme, { background: string; symbol: string }> = {
+  dark: {
+    background: "#171b1b",
+    symbol: "#f4f0e8",
+  },
+  light: {
+    background: "#edf1f3",
+    symbol: "#172126",
+  },
+};
 
 function resolveTheme(settings: Pick<AppSettings, "theme">): ResolvedTheme {
   if (settings.theme === "system") {
@@ -16,18 +26,11 @@ function resolveTheme(settings: Pick<AppSettings, "theme">): ResolvedTheme {
 
 function getTitleBarColors(settings: Pick<AppSettings, "theme">): Electron.TitleBarOverlay {
   const theme = resolveTheme(settings);
-
-  if (theme === "dark") {
-    return {
-      color: "#171b1b",
-      symbolColor: "#f4f0e8",
-      height: titleBarHeight,
-    };
-  }
+  const colors = shellColors[theme];
 
   return {
-    color: "#f3f1ec",
-    symbolColor: "#1e2422",
+    color: colors.background,
+    symbolColor: colors.symbol,
     height: titleBarHeight,
   };
 }
@@ -37,7 +40,7 @@ export function getWindowShellOptions(settings: Pick<AppSettings, "theme">): Bro
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
     titleBarOverlay: getTitleBarColors(settings),
-    backgroundColor: resolveTheme(settings) === "dark" ? "#171b1b" : "#f3f1ec",
+    backgroundColor: shellColors[resolveTheme(settings)].background,
   };
 }
 
@@ -46,7 +49,7 @@ export function applyWindowShellTheme(window: BrowserWindow, settings: Pick<AppS
     return;
   }
 
-  window.setBackgroundColor(resolveTheme(settings) === "dark" ? "#171b1b" : "#f3f1ec");
+  window.setBackgroundColor(shellColors[resolveTheme(settings)].background);
   window.setTitleBarOverlay(getTitleBarColors(settings));
 }
 

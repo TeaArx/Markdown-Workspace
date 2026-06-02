@@ -23,21 +23,14 @@
           </select>
         </label>
 
-        <label class="field">
-          <span>Размер шрифта редактора</span>
-
-          <input
-            v-model.number="draft.fontSize"
-            min="12"
-            max="24"
-            type="range"
-          />
-          <strong>{{ draft.fontSize }}px</strong>
-        </label>
-
         <label class="field field--inline">
           <input v-model="draft.autosave" type="checkbox" />
           <span>Автосохранение текущего файла</span>
+        </label>
+
+        <label class="field field--inline">
+          <input v-model="draft.openLastFileOnStart" type="checkbox" />
+          <span>Открывать последний файл при запуске</span>
         </label>
 
         <label class="field">
@@ -52,22 +45,22 @@
         </label>
 
         <label class="field">
-          <span>Ширина окна по умолчанию</span>
+          <span>Стартовая ширина окна</span>
 
           <input
-            v-model.number="draft.windowBounds.width"
-            min="900"
+            v-model.number="draft.defaultWindowBounds.width"
+            min="1000"
             max="2400"
             type="number"
           />
         </label>
 
         <label class="field">
-          <span>Высота окна по умолчанию</span>
+          <span>Стартовая высота окна</span>
 
           <input
-            v-model.number="draft.windowBounds.height"
-            min="600"
+            v-model.number="draft.defaultWindowBounds.height"
+            min="700"
             max="1600"
             type="number"
           />
@@ -107,30 +100,47 @@ const settingsStore = useSettingsStore();
 const draft = reactive<AppSettings>({
   theme: "system",
   fontSize: 16,
+  editorFontFamily: "mono",
+  editorLineHeight: 1.7,
+  editorWordWrap: false,
+  previewFontSize: 16,
+  previewLineHeight: 1.72,
   windowBounds: {
+    width: 1280,
+    height: 820,
+  },
+  defaultWindowBounds: {
     width: 1280,
     height: 820,
   },
   lastFilePath: null,
   autosave: false,
+  openLastFileOnStart: true,
   pomodoroMinutes: 25,
 });
 
 function assignDraft(settings: AppSettings): void {
   draft.theme = settings.theme;
   draft.fontSize = settings.fontSize;
+  draft.editorFontFamily = settings.editorFontFamily;
+  draft.editorLineHeight = settings.editorLineHeight;
+  draft.editorWordWrap = settings.editorWordWrap;
+  draft.previewFontSize = settings.previewFontSize;
+  draft.previewLineHeight = settings.previewLineHeight;
   draft.windowBounds = { ...settings.windowBounds };
+  draft.defaultWindowBounds = { ...settings.defaultWindowBounds };
   draft.lastFilePath = settings.lastFilePath;
   draft.autosave = settings.autosave;
+  draft.openLastFileOnStart = settings.openLastFileOnStart;
   draft.pomodoroMinutes = settings.pomodoroMinutes;
 }
 
 async function saveSettings(): Promise<void> {
   const settings = await settingsStore.update({
     theme: draft.theme,
-    fontSize: draft.fontSize,
-    windowBounds: { ...draft.windowBounds },
+    defaultWindowBounds: { ...draft.defaultWindowBounds },
     autosave: draft.autosave,
+    openLastFileOnStart: draft.openLastFileOnStart,
     pomodoroMinutes: draft.pomodoroMinutes,
   });
   assignDraft(settings);

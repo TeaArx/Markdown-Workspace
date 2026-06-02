@@ -71,7 +71,11 @@ onMounted(async () => {
     settingsStore.setSettings(settings);
   });
 
-  if (!isSettingsRoute.value && settingsStore.settings.lastFilePath) {
+  if (
+    !isSettingsRoute.value &&
+    settingsStore.settings.openLastFileOnStart &&
+    settingsStore.settings.lastFilePath
+  ) {
     await editor.openFromPath(settingsStore.settings.lastFilePath, false);
   }
 

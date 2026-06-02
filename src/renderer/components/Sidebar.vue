@@ -28,10 +28,10 @@
       <RouterLink
         to="/chart"
         class="nav-item"
-        data-short="Г"
-        title="График"
+        data-short="M"
+        title="Mermaid"
       >
-        <span>График</span>
+        <span>Mermaid</span>
       </RouterLink>
     </nav>
 
