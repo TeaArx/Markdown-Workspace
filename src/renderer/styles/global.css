@@ -2087,12 +2087,12 @@ button {
 
 @media (max-width: 1080px) {
   .app-shell {
-    grid-template-columns: 76px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr);
   }
 
   .sidebar {
-    gap: 12px;
-    padding: 14px 10px;
+    gap: 10px;
+    padding: 12px 8px;
   }
 
   .brand {
@@ -2107,8 +2107,8 @@ button {
   }
 
   .brand__mark {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
   }
 
   .nav-list {
@@ -2117,7 +2117,7 @@ button {
 
   .nav-item {
     justify-content: center;
-    min-height: 44px;
+    min-height: 42px;
     padding: 0;
     font-size: 0;
   }
@@ -2134,7 +2134,7 @@ button {
   }
 
   .sidebar__settings {
-    min-height: 44px;
+    min-height: 42px;
     padding: 0;
     font-size: 0;
   }
@@ -2146,11 +2146,22 @@ button {
   }
 
   .toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-content: center;
-    flex-wrap: wrap;
+    align-items: start;
     gap: 10px;
     min-height: auto;
     padding: 12px 14px;
+  }
+
+  .toolbar > .toolbar__group:first-child {
+    grid-column: 1;
+  }
+
+  .toolbar > .segmented {
+    grid-column: 2;
+    justify-self: end;
   }
 
   .toolbar__spacer {
@@ -2158,6 +2169,7 @@ button {
   }
 
   .toolbar__group--compact {
+    grid-column: 1 / -1;
     justify-content: flex-start;
   }
 
@@ -2171,9 +2183,9 @@ button {
   .editor-view--split {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows:
-      minmax(220px, var(--editor-split))
+      minmax(150px, var(--editor-split))
       var(--editor-resizer-size)
-      minmax(220px, 1fr);
+      minmax(150px, 1fr);
   }
 
   .editor-view--resizing {
@@ -2267,6 +2279,247 @@ button {
   .chart-values__header,
   .chart-value-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .window-titlebar {
+    right: 132px;
+    gap: 6px;
+    padding-left: 8px;
+  }
+
+  .window-titlebar__title {
+    max-width: 210px;
+  }
+
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .toolbar > .toolbar__group:first-child,
+  .toolbar > .segmented,
+  .toolbar__group--compact {
+    grid-column: 1;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .toolbar__group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    width: 100%;
+  }
+
+  .toolbar__group--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .button,
+  .segmented button {
+    min-width: 0;
+    width: 100%;
+    min-height: 34px;
+    padding-right: 10px;
+    padding-left: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .segmented {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    overflow: visible;
+  }
+
+  .editor-view,
+  .notes-view,
+  .chart-view {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .pane-header {
+    min-height: 38px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .pane-header__actions {
+    gap: 6px;
+  }
+
+  .pane-header__actions > span {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pane-icon-button {
+    width: 26px;
+    height: 24px;
+  }
+
+  .markdown-help-toggle {
+    min-width: 32px;
+    min-height: 24px;
+  }
+
+  .pane-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    padding: 8px 10px;
+    overflow: visible;
+  }
+
+  .pane-controls label {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pane-controls input[type="range"] {
+    width: 100%;
+  }
+
+  .pane-controls select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .pane-control-toggle {
+    display: flex;
+  }
+
+  .markdown-input,
+  .note-content-input {
+    padding: 14px;
+  }
+
+  .markdown-preview {
+    padding: 18px 18px 26px;
+  }
+
+  .markdown-preview h1 {
+    font-size: 26px;
+  }
+
+  .markdown-preview h2 {
+    font-size: 21px;
+  }
+
+  .status-bar {
+    gap: 10px;
+    min-height: 32px;
+    padding: 5px 10px;
+  }
+
+  .status-bar span:nth-of-type(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .window-titlebar {
+    right: 126px;
+  }
+
+  .window-titlebar__icon,
+  .window-titlebar__title {
+    display: none;
+  }
+
+  .sidebar {
+    gap: 8px;
+    padding: 9px 6px;
+  }
+
+  .brand__mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .nav-list {
+    gap: 6px;
+  }
+
+  .nav-item,
+  .sidebar__settings {
+    min-height: 38px;
+  }
+
+  .nav-item::before {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .toolbar {
+    padding: 8px;
+  }
+
+  .toolbar__group,
+  .toolbar__group--compact,
+  .segmented {
+    gap: 6px;
+  }
+
+  .button,
+  .segmented button {
+    min-height: 32px;
+    padding-right: 7px;
+    padding-left: 7px;
+    font-size: 12px;
+  }
+
+  .segmented button {
+    font-size: 0;
+  }
+
+  .segmented button::before {
+    content: attr(data-short);
+    font-size: 12px;
+  }
+
+  .editor-view--split {
+    grid-template-rows:
+      minmax(120px, var(--editor-split))
+      var(--editor-resizer-size)
+      minmax(120px, 1fr);
+  }
+
+  .pane-header__actions > span {
+    max-width: 86px;
+  }
+
+  .pane-controls label {
+    grid-template-columns: 62px minmax(0, 1fr) auto;
+    font-size: 10px;
+  }
+
+  .markdown-help {
+    right: 8px;
+    width: min(300px, calc(100% - 16px));
+  }
+
+  .markdown-help__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .status-bar span:nth-of-type(2),
+  .status-bar span:nth-of-type(4) {
+    display: none;
   }
 }
 

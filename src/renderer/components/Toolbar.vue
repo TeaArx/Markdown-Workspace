@@ -34,6 +34,7 @@
         v-for="mode in modes"
         :key="mode.value"
         type="button"
+        :data-short="mode.short"
         :class="{ active: editor.viewMode === mode.value }"
         @click="editor.setViewMode(mode.value)"
       >
@@ -79,9 +80,9 @@ const windowApi = window.electronAPI;
 const route = useRoute();
 const isEditorRoute = computed(() => route.name === "editor");
 
-const modes: Array<{ label: string; value: ViewMode }> = [
-  { label: "Редактирование", value: "edit" },
-  { label: "Разделить", value: "split" },
-  { label: "Предпросмотр", value: "preview" },
+const modes: Array<{ label: string; short: string; value: ViewMode }> = [
+  { label: "Редактирование", short: "Ред", value: "edit" },
+  { label: "Разделить", short: "2", value: "split" },
+  { label: "Предпросмотр", short: "Прос", value: "preview" },
 ];
 </script>
