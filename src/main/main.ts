@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, Notification, app, ipcMain } from 'electron';
+import { UpdateSourceType, makeUserNotifier, updateElectronApp } from 'update-electron-app';
 
 import { IPC_CHANNELS } from '../shared/constants';
 import { registerFileHandlers } from './ipc/fileHandlers';
@@ -14,6 +15,21 @@ if (require('electron-squirrel-startup')) {
 
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.markdown-workspace.app');
+}
+
+if (app.isPackaged) {
+  updateElectronApp({
+    updateSource: {
+      type: UpdateSourceType.ElectronPublicUpdateService,
+      repo: 'TeaArx/Markdown-Workspace',
+    },
+    onNotifyUser: makeUserNotifier({
+      title: 'Обновление Markdown Workspace',
+      detail: 'Новая версия скачана. Перезапустить приложение и установить обновление?',
+      restartButtonText: 'Перезапустить',
+      laterButtonText: 'Позже',
+    }),
+  });
 }
 
 let mainWindow: BrowserWindow | null = null;

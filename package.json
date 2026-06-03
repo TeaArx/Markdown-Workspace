@@ -28,6 +28,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.2",
     "@electron-forge/plugin-fuses": "^7.11.2",
     "@electron-forge/plugin-webpack": "^7.11.2",
+    "@electron-forge/publisher-github": "^7.11.2",
     "@electron/fuses": "^1.8.0",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
@@ -50,6 +51,7 @@
     "markdown-it": "^14.2.0",
     "mermaid": "^11.15.0",
     "pinia": "^3.0.4",
+    "update-electron-app": "^3.2.0",
     "vue": "^3.5.34",
     "vue-router": "^5.0.7"
   }
