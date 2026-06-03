@@ -355,6 +355,13 @@ a:focus-visible {
   border-top: 1px solid var(--border);
 }
 
+.sidebar-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .sidebar-section h2,
 .settings-summary h2 {
   margin: 0;
@@ -403,6 +410,152 @@ a:focus-visible {
 
 .sidebar__settings {
   margin-top: auto;
+}
+
+.git-panel__empty,
+.git-panel__error {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.git-panel__error,
+.git-panel__dirty {
+  color: var(--warning);
+}
+
+.git-diff-overlay {
+  position: fixed;
+  inset: var(--window-titlebar-height) 0 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(23, 33, 38, 0.38);
+  backdrop-filter: blur(3px);
+  -webkit-app-region: no-drag;
+}
+
+.git-diff-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1040px, 100%);
+  height: min(720px, 100%);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: 0 24px 70px rgba(23, 33, 38, 0.26);
+}
+
+.git-diff-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--secondary-soft) 64%, var(--panel-muted)),
+    var(--panel-muted)
+  );
+}
+
+.git-diff-dialog__header h2,
+.git-diff-dialog__header p {
+  margin: 0;
+}
+
+.git-diff-dialog__header h2 {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 820;
+}
+
+.git-diff-dialog__header p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.git-diff-dialog__body {
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 0;
+  background: #fbfcfc;
+  font-family: var(--editor-font-family);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.git-diff-dialog__empty {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 28px;
+  color: var(--muted);
+  background: var(--panel);
+  font-weight: 700;
+}
+
+.git-diff-line {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  min-width: max-content;
+  color: var(--muted-strong);
+  white-space: pre;
+}
+
+.git-diff-line__number {
+  padding: 0 12px;
+  border-right: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--muted);
+  text-align: right;
+  user-select: none;
+}
+
+.git-diff-line__content {
+  padding: 0 14px;
+}
+
+.git-diff-line--addition {
+  background: color-mix(in srgb, var(--success) 13%, transparent);
+  color: color-mix(in srgb, var(--success) 82%, var(--text));
+}
+
+.git-diff-line--deletion {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: color-mix(in srgb, var(--danger) 86%, var(--text));
+}
+
+.git-diff-line--hunk {
+  background: color-mix(in srgb, var(--secondary-accent) 12%, transparent);
+  color: var(--secondary-accent);
+  font-weight: 800;
+}
+
+.git-diff-line--meta,
+.git-diff-line--file {
+  background: var(--panel-muted);
+  color: var(--muted);
+  font-weight: 760;
+}
+
+:root[data-theme="dark"] .git-diff-overlay {
+  background: rgba(0, 0, 0, 0.48);
+}
+
+:root[data-theme="dark"] .git-diff-dialog {
+  box-shadow: 0 28px 76px rgba(0, 0, 0, 0.42);
+}
+
+:root[data-theme="dark"] .git-diff-dialog__body {
+  background: #151b1b;
 }
 
 .toolbar {

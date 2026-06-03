@@ -20,6 +20,7 @@ const fallbackSettings: AppSettings = {
   autosave: false,
   openLastFileOnStart: true,
   pomodoroMinutes: 25,
+  gitIntegrationEnabled: false,
 };
 
 function resolveTheme(theme: ThemePreference): 'light' | 'dark' {

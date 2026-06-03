@@ -3,6 +3,7 @@ import { UpdateSourceType, makeUserNotifier, updateElectronApp } from 'update-el
 
 import { IPC_CHANNELS } from '../shared/constants';
 import { registerFileHandlers } from './ipc/fileHandlers';
+import { registerGitHandlers } from './ipc/gitHandlers';
 import { registerNotesHandlers } from './ipc/notesHandlers';
 import { registerSettingsHandlers } from './ipc/settingsHandlers';
 import { registerWindowHandlers } from './ipc/windowHandlers';
@@ -97,6 +98,7 @@ if (!gotSingleInstanceLock) {
     registerAppHandlers();
     registerSettingsHandlers();
     registerFileHandlers();
+    registerGitHandlers();
     registerNotesHandlers();
     registerWindowHandlers({
       getMainWindow,

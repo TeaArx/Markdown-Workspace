@@ -22,6 +22,7 @@ export interface AppSettings {
   autosave: boolean;
   openLastFileOnStart: boolean;
   pomodoroMinutes: number;
+  gitIntegrationEnabled: boolean;
 }
 
 export const defaultSettings: AppSettings = {
@@ -44,6 +45,7 @@ export const defaultSettings: AppSettings = {
   autosave: false,
   openLastFileOnStart: true,
   pomodoroMinutes: 25,
+  gitIntegrationEnabled: false,
 };
 
 const themes: ThemePreference[] = ['system', 'light', 'dark'];
@@ -126,6 +128,10 @@ function sanitizeSettingsPatch(value: unknown): Partial<AppSettings> {
     patch.pomodoroMinutes = value.pomodoroMinutes;
   }
 
+  if (typeof value.gitIntegrationEnabled === 'boolean') {
+    patch.gitIntegrationEnabled = value.gitIntegrationEnabled;
+  }
+
   if (typeof value.lastFilePath === 'string') {
     patch.lastFilePath = value.lastFilePath;
   } else if (value.lastFilePath === null) {
@@ -183,6 +189,7 @@ function sanitizeSettings(value: Partial<AppSettings>): AppSettings {
     autosave: Boolean(value.autosave),
     openLastFileOnStart: value.openLastFileOnStart !== false,
     pomodoroMinutes: clamp(asFiniteNumber(value.pomodoroMinutes, defaultSettings.pomodoroMinutes), 5, 90),
+    gitIntegrationEnabled: Boolean(value.gitIntegrationEnabled),
   };
 
   if (typeof currentBounds.x === 'number') {

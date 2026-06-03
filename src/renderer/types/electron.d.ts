@@ -46,6 +46,18 @@ declare global {
     autosave: boolean;
     openLastFileOnStart: boolean;
     pomodoroMinutes: number;
+    gitIntegrationEnabled: boolean;
+  }
+
+  interface GitFileStatus {
+    isRepository: boolean;
+    repoRoot: string | null;
+    branch: string | null;
+    filePath: string;
+    relativePath: string | null;
+    statusCode: string | null;
+    statusLabel: string;
+    isDirty: boolean;
   }
 
   interface NoteRecord {
@@ -66,6 +78,11 @@ declare global {
     openFileByPath: (filePath: string) => Promise<OpenFileResult>;
     saveFile: (content: string, filePath?: string | null) => Promise<SaveFileResult | null>;
     saveFileAs: (content: string, filePath?: string | null) => Promise<SaveFileResult | null>;
+
+    git: {
+      status: (filePath: string) => Promise<GitFileStatus>;
+      diff: (filePath: string) => Promise<string>;
+    };
 
     getSettings: () => Promise<AppSettings>;
     updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;

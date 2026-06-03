@@ -8,6 +8,9 @@ export const IPC_CHANNELS = {
   FILE_SAVE: 'file:save',
   FILE_SAVE_AS: 'file:saveAs',
 
+  GIT_STATUS: 'git:status',
+  GIT_DIFF: 'git:diff',
+
   SETTINGS_GET: 'settings:get',
   SETTINGS_UPDATE: 'settings:update',
   SETTINGS_RESET: 'settings:reset',

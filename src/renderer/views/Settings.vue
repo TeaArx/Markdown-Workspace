@@ -33,6 +33,11 @@
           <span>Открывать последний файл при запуске</span>
         </label>
 
+        <label class="field field--inline">
+          <input v-model="draft.gitIntegrationEnabled" type="checkbox" />
+          <span>Показывать Git для текущего файла</span>
+        </label>
+
         <label class="field">
           <span>Длительность фокус-сессии (мин.)</span>
 
@@ -117,6 +122,7 @@ const draft = reactive<AppSettings>({
   autosave: false,
   openLastFileOnStart: true,
   pomodoroMinutes: 25,
+  gitIntegrationEnabled: false,
 });
 
 function assignDraft(settings: AppSettings): void {
@@ -133,6 +139,7 @@ function assignDraft(settings: AppSettings): void {
   draft.autosave = settings.autosave;
   draft.openLastFileOnStart = settings.openLastFileOnStart;
   draft.pomodoroMinutes = settings.pomodoroMinutes;
+  draft.gitIntegrationEnabled = settings.gitIntegrationEnabled;
 }
 
 async function saveSettings(): Promise<void> {
@@ -142,6 +149,7 @@ async function saveSettings(): Promise<void> {
     autosave: draft.autosave,
     openLastFileOnStart: draft.openLastFileOnStart,
     pomodoroMinutes: draft.pomodoroMinutes,
+    gitIntegrationEnabled: draft.gitIntegrationEnabled,
   });
   assignDraft(settings);
 }

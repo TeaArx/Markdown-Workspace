@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFileAs: (content: string, filePath?: string | null) =>
     ipcRenderer.invoke(IPC_CHANNELS.FILE_SAVE_AS, { content, filePath }),
 
+  git: {
+    status: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_STATUS, filePath),
+    diff: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DIFF, filePath),
+  },
+
   getSettings: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET),
   updateSettings: (patch: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_UPDATE, patch),
   resetSettings: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_RESET),
