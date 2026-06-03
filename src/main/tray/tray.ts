@@ -1,5 +1,7 @@
 import { BrowserWindow, Menu, Tray, app, nativeImage } from "electron";
 
+import { trayIconPath } from "../assets";
+
 let tray: Tray | null = null;
 
 interface TrayOptions {
@@ -9,9 +11,10 @@ interface TrayOptions {
 }
 
 function createTrayIcon(): Electron.NativeImage {
-  const icon = nativeImage.createFromDataURL(
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAM0lEQVR42mNgwA8YGBgY/2dgYGBg+M+ABRjQwMDA8J8BCzCqgAqGJqgFqAERAgB3xxKfOX9zcQAAAABJRU5ErkJggg==",
-  );
+  const icon = nativeImage.createFromPath(trayIconPath).resize({
+    width: process.platform === "win32" ? 16 : 22,
+    height: process.platform === "win32" ? 16 : 22,
+  });
 
   if (process.platform === "darwin") {
     icon.setTemplateImage(true);
@@ -30,16 +33,16 @@ export function createTray(options: TrayOptions): Tray {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: "Show",
+      label: "Показать",
       click: options.showMainWindow,
     },
     {
-      label: "Hide",
+      label: "Скрыть",
       click: () => options.getMainWindow()?.hide(),
     },
     { type: "separator" },
     {
-      label: "Exit",
+      label: "Выход",
       click: () => {
         app.releaseSingleInstanceLock();
         options.quit();

@@ -15,10 +15,13 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     executableName: 'markdown-workspace',
+    icon: './assets/icon',
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      setupIcon: './assets/icon.ico',
+    }),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({}),
     new MakerDeb({}),

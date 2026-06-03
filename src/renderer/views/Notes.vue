@@ -3,25 +3,68 @@
     <div class="notes-list">
       <div class="pane-header">
         <span>Заметки</span>
-        <button class="button button--small" type="button" @click="createNote">
-          Добавить
+        <div class="notes-list__actions">
+          <button
+            class="button button--small"
+            type="button"
+            :disabled="notes.length === 0"
+            @click="toggleSelectionMode"
+          >
+            {{ isSelecting ? "Отмена" : "Выбрать" }}
+          </button>
+          <button class="button button--small" type="button" @click="createNote">
+            Добавить
+          </button>
+        </div>
+      </div>
+
+      <div v-if="isSelecting" class="notes-selection-bar">
+        <span>{{ selectedNoteIds.size }} выбрано</span>
+        <button
+          class="button button--small button--danger"
+          type="button"
+          :disabled="selectedNoteIds.size === 0"
+          @click="removeSelectedNotes"
+        >
+          Удалить
         </button>
       </div>
 
-      <button
-        v-for="note in notes"
-        :key="note.id"
-        class="note-item"
-        :class="{
-          active: selectedNote?.id === note.id,
-          done: Boolean(note.done),
-        }"
-        type="button"
-        @click="selectNote(note)"
-      >
-        <strong>{{ note.title }}</strong>
-        <span>{{ previewLine(note.content) }}</span>
-      </button>
+      <div class="notes-items">
+        <button
+          v-for="note in notes"
+          :key="note.id"
+          class="note-item"
+          :class="{
+            active: selectedNote?.id === note.id,
+            done: Boolean(note.done),
+            pinned: Boolean(note.pinned),
+            selected: selectedNoteIds.has(note.id),
+          }"
+          type="button"
+          @click="handleNoteClick(note)"
+        >
+          <span v-if="isSelecting" class="note-item__check" aria-hidden="true">
+            {{ selectedNoteIds.has(note.id) ? "✓" : "" }}
+          </span>
+          <span class="note-item__content">
+            <span class="note-item__top">
+              <strong>{{ note.title }}</strong>
+              <span class="note-item__badges" aria-label="Статусы заметки">
+                <span v-if="note.pinned" class="note-badge note-badge--pinned" title="Закреплено">
+                  <span aria-hidden="true">★</span>
+                  Закреплено
+                </span>
+                <span v-if="note.done" class="note-badge note-badge--done" title="Выполнено">
+                  <span aria-hidden="true">✓</span>
+                  Готово
+                </span>
+              </span>
+            </span>
+            <span>{{ previewLine(note.content) }}</span>
+          </span>
+        </button>
+      </div>
 
       <p v-if="notes.length === 0" class="empty-state">
         Пока нет заметок. Создайте одну для задачи, идеи или короткого
@@ -35,12 +78,14 @@
           <span>Редактировать заметку</span>
 
           <div class="note-actions">
-            <label class="inline-toggle">
+            <label class="inline-toggle" :class="{ active: draftDone }">
               <input v-model="draftDone" type="checkbox" />
+              <span aria-hidden="true">✓</span>
               Выполнено
             </label>
-            <label class="inline-toggle">
+            <label class="inline-toggle" :class="{ active: draftPinned }">
               <input v-model="draftPinned" type="checkbox" />
+              <span aria-hidden="true">★</span>
               Закреплено
             </label>
           </div>
@@ -98,10 +143,25 @@ const draftTitle = ref("");
 const draftContent = ref("");
 const draftDone = ref(false);
 const draftPinned = ref(false);
+const isSelecting = ref(false);
+const selectedNoteIds = ref<Set<number>>(new Set());
 
 const selectedNote = computed(
   () => notes.value.find((note) => note.id === selectedId.value) ?? null,
 );
+
+const isDraftDirty = computed(() => {
+  if (!selectedNote.value) {
+    return false;
+  }
+
+  return (
+    draftTitle.value !== selectedNote.value.title ||
+    draftContent.value !== selectedNote.value.content ||
+    draftDone.value !== Boolean(selectedNote.value.done) ||
+    draftPinned.value !== Boolean(selectedNote.value.pinned)
+  );
+});
 
 function previewLine(content: string): string {
   const line = content.replace(/\s+/g, " ").trim();
@@ -118,6 +178,16 @@ function fillDraft(note: NoteRecord): void {
   draftPinned.value = Boolean(note.pinned);
 }
 
+function confirmDiscardDraft(): boolean {
+  if (!isDraftDirty.value) {
+    return true;
+  }
+
+  return window.confirm(
+    "В заметке есть несохранённые изменения.\n\nПерейти без сохранения?",
+  );
+}
+
 async function loadNotes(): Promise<void> {
   notes.value = await window.electronAPI.notes.list();
 
@@ -127,10 +197,40 @@ async function loadNotes(): Promise<void> {
 }
 
 function selectNote(note: NoteRecord): void {
+  if (note.id !== selectedId.value && !confirmDiscardDraft()) {
+    return;
+  }
+
   fillDraft(note);
 }
 
+function handleNoteClick(note: NoteRecord): void {
+  if (!isSelecting.value) {
+    selectNote(note);
+    return;
+  }
+
+  const nextSelection = new Set(selectedNoteIds.value);
+
+  if (nextSelection.has(note.id)) {
+    nextSelection.delete(note.id);
+  } else {
+    nextSelection.add(note.id);
+  }
+
+  selectedNoteIds.value = nextSelection;
+}
+
+function toggleSelectionMode(): void {
+  isSelecting.value = !isSelecting.value;
+  selectedNoteIds.value = new Set();
+}
+
 async function createNote(): Promise<void> {
+  if (!confirmDiscardDraft()) {
+    return;
+  }
+
   const note = await window.electronAPI.notes.create(
     "Новая заметка",
     "- Задача\n- Детали",
@@ -165,6 +265,12 @@ async function removeNote(): Promise<void> {
     return;
   }
 
+  const shouldDelete = window.confirm(`Удалить заметку "${selectedNote.value.title}"?`);
+
+  if (!shouldDelete) {
+    return;
+  }
+
   await window.electronAPI.notes.delete(selectedNote.value.id);
   notes.value = notes.value.filter(
     (note) => note.id !== selectedNote.value?.id,
@@ -176,13 +282,48 @@ async function removeNote(): Promise<void> {
   }
 }
 
+async function removeSelectedNotes(): Promise<void> {
+  const ids = selectedNoteIds.value;
+
+  if (!ids.size) {
+    return;
+  }
+
+  const notesToDelete = notes.value.filter((note) => ids.has(note.id));
+  const listPreview = notesToDelete
+    .slice(0, 8)
+    .map((note) => `• ${note.title}`)
+    .join("\n");
+  const restCount = Math.max(0, notesToDelete.length - 8);
+  const detail = restCount ? `${listPreview}\nи ещё ${restCount}` : listPreview;
+  const shouldDelete = window.confirm(
+    `Удалить ${notesToDelete.length} заметок?\n\n${detail}`,
+  );
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  await Promise.all(notesToDelete.map((note) => window.electronAPI.notes.delete(note.id)));
+  notes.value = notes.value.filter((note) => !ids.has(note.id));
+  selectedNoteIds.value = new Set();
+  isSelecting.value = false;
+
+  if (selectedId.value && ids.has(selectedId.value)) {
+    selectedId.value = null;
+  }
+
+  if (notes.value.length && !selectedNote.value) {
+    fillDraft(notes.value[0]);
+  }
+}
+
 function sendToEditor(): void {
   if (!selectedNote.value) {
     return;
   }
 
-  editor.setContent(`# ${draftTitle.value}\n\n${draftContent.value}`);
-  editor.statusMessage = "Заметка скопирована в редактор";
+  editor.replaceWithDraft(draftTitle.value, `# ${draftTitle.value}\n\n${draftContent.value}`);
 }
 
 onMounted(() => {

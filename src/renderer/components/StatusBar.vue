@@ -1,12 +1,16 @@
 <template>
   <footer class="status-bar">
-    <span :class="{ 'status-bar__dirty': editor.isDirty }">
+    <span class="status-bar__file" :title="editor.filePath ?? editor.fileName">
+      {{ editor.fileName }}
+    </span>
+
+    <span class="status-bar__save-state" :class="{ 'status-bar__dirty': editor.isDirty }">
       {{ editor.isDirty ? "Изменения не сохранены" : "Сохранено" }}
     </span>
 
-    <span>{{ editor.lineCount }} строк</span>
-    <span>{{ editor.wordCount }} слов</span>
-    <span>{{ editor.charCount }} символов</span>
+    <span class="status-bar__metric status-bar__metric--lines">{{ editor.lineCount }} строк</span>
+    <span class="status-bar__metric status-bar__metric--words">{{ editor.wordCount }} слов</span>
+    <span class="status-bar__metric status-bar__metric--chars">{{ editor.charCount }} символов</span>
 
     <span class="status-bar__message">{{ editor.statusMessage }}</span>
     <span class="status-bar__timer"

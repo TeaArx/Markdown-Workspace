@@ -1,6 +1,7 @@
 import { BrowserWindow, shell } from "electron";
 
-import { readSettings, updateSettings } from "../ipc/settingsHandlers";
+import { windowIconPath } from "../assets";
+import { readSettings, updateWindowBounds } from "../ipc/settingsHandlers";
 import { getWindowShellOptions } from "./titleBar";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
@@ -28,13 +29,19 @@ export function createMainWindow({
   shouldQuit,
 }: MainWindowOptions): BrowserWindow {
   const settings = readSettings();
+  const savedPosition = {
+    ...(typeof settings.windowBounds.x === "number" ? { x: settings.windowBounds.x } : {}),
+    ...(typeof settings.windowBounds.y === "number" ? { y: settings.windowBounds.y } : {}),
+  };
   const mainWindow = new BrowserWindow({
-    ...settings.windowBounds,
+    ...settings.defaultWindowBounds,
+    ...savedPosition,
     ...getWindowShellOptions(settings),
-    minWidth: 1000,
-    minHeight: 700,
+    minWidth: 760,
+    minHeight: 560,
     show: false,
     title: "Markdown Workspace",
+    icon: windowIconPath,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
@@ -54,7 +61,7 @@ export function createMainWindow({
 
     saveBoundsTimer = setTimeout(() => {
       if (!mainWindow.isDestroyed()) {
-        updateSettings({ windowBounds: mainWindow.getBounds() });
+        updateWindowBounds(mainWindow.getBounds());
       }
     }, 300);
   };
@@ -69,7 +76,7 @@ export function createMainWindow({
   mainWindow.on("move", saveWindowBounds);
 
   mainWindow.on("close", (event) => {
-    updateSettings({ windowBounds: mainWindow.getBounds() });
+    updateWindowBounds(mainWindow.getBounds());
 
     if (!shouldQuit()) {
       event.preventDefault();

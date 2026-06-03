@@ -1,48 +1,37 @@
 <template>
   <section class="chart-view" aria-labelledby="chart-title">
-    <aside class="chart-guide">
-      <div class="pane-header">
-        <span>График файла</span>
-      </div>
-
-      <div class="chart-guide__body">
-        <div class="chart-guide__file">
-          <span>Текущий файл</span>
-          <strong>{{ editor.fileName }}</strong>
-        </div>
-
-        <button class="button button--primary button--full" type="button" @click="applyToDocument">
-          Вставить в файл
-        </button>
-        <button class="button button--full" type="button" :disabled="!editor.isDirty || editor.isLoading" @click="editor.save">
-          Сохранить файл
-        </button>
-        <button class="button button--full" type="button" @click="loadFromDocument">
-          Загрузить из файла
-        </button>
-        <button class="button button--full" type="button" @click="resetChart">
-          Новый график
-        </button>
-      </div>
-    </aside>
-
     <div class="chart-workspace">
       <header class="chart-header">
         <div>
-          <p class="chart-kicker">Данные в Markdown</p>
+          <p class="chart-kicker">Mermaid для GitHub Markdown</p>
           <h1 id="chart-title">{{ title || "Без названия" }}</h1>
           <p class="chart-summary">
-            {{ description || "График будет сохранен прямо в текущий Markdown-файл." }}
+            {{ description || "Диаграмма будет сохранена текстовым блоком для README, issues и PR." }}
           </p>
         </div>
 
         <div class="chart-status" :class="{ 'chart-status--dirty': editor.isDirty }">
           {{ editor.isDirty ? "Есть несохраненные изменения" : "Файл сохранен" }}
         </div>
+
+        <div class="chart-header__actions">
+          <button class="button button--primary" type="button" @click="appendToDocument">
+            Добавить в файл
+          </button>
+          <button class="button" type="button" @click="loadFromDocument">
+            Загрузить последний
+          </button>
+          <button class="button" type="button" @click="resetChart">
+            Новый
+          </button>
+          <button class="button" type="button" :disabled="!editor.isDirty || editor.isLoading" @click="editor.save">
+            Сохранить
+          </button>
+        </div>
       </header>
 
       <div class="chart-layout">
-        <article class="chart-panel" aria-label="Предпросмотр графика">
+        <article class="chart-panel" aria-label="Предпросмотр Mermaid-диаграммы">
           <div class="chart-panel__topline">
             <div>
               <span class="chart-stat-label">Пик</span>
@@ -60,7 +49,7 @@
 
           <svg class="activity-chart" viewBox="0 0 720 360" role="img" :aria-label="chartAriaLabel">
             <title>{{ chartAriaLabel }}</title>
-            <desc>График строится из строк редактора данных.</desc>
+            <desc>Диаграмма строится из строк редактора данных.</desc>
 
             <g class="chart-grid" aria-hidden="true">
               <line
@@ -113,7 +102,7 @@
           </svg>
         </article>
 
-        <aside class="chart-editor" aria-label="Редактирование графика">
+        <aside class="chart-editor" aria-label="Редактирование диаграммы">
           <div class="pane-header">
             <span>Редактирование</span>
           </div>
@@ -145,6 +134,21 @@
               </label>
             </div>
 
+            <details class="chart-import">
+              <summary>Быстро вставить данные</summary>
+              <p class="chart-import__hint">Например: PR, Issues, Tests или этапы релиза. Каждая строка: подпись и число.</p>
+              <textarea
+                v-model="importText"
+                rows="4"
+                placeholder="PR, 4&#10;Issues, 7&#10;Tests, 5"
+              />
+              <div class="chart-import__actions">
+                <button class="button button--small chart-import__button" type="button" @click="importRows">
+                  Применить строки
+                </button>
+              </div>
+            </details>
+
             <div class="chart-values">
               <div class="chart-values__header">
                 <span>Подпись</span>
@@ -166,8 +170,8 @@
           </div>
 
           <div class="chart-actions">
-            <button class="button button--primary" type="button" @click="applyToDocument">
-              Вставить в файл
+            <button class="button button--primary" type="button" @click="appendToDocument">
+              Добавить в файл
             </button>
             <button class="button" type="button" :disabled="!editor.isDirty || editor.isLoading" @click="editor.save">
               Сохранить
@@ -192,22 +196,18 @@ type ChartPoint = {
   value: number;
 };
 
-const blockStart = "[//]: # (markdown-workspace:chart:start)";
-const blockEnd = "[//]: # (markdown-workspace:chart:end)";
-const legacyBlockStart = "<!-- markdown-workspace:chart:start -->";
-const legacyBlockEnd = "<!-- markdown-workspace:chart:end -->";
-
 const editor = useEditorStore();
-const title = ref("Прогресс проекта");
-const description = ref("Короткий график по данным из текущего файла.");
-const unit = ref("шт.");
-const chartKind = ref<ChartKind>("combo");
+const title = ref("GitHub активность");
+const description = ref("Mermaid-диаграмма для README, issues или описания PR.");
+const unit = ref("задач");
+const chartKind = ref<ChartKind>("bar");
+const importText = ref("");
 const points = ref<ChartPoint[]>([
-  { id: 1, label: "Пн", value: 4 },
-  { id: 2, label: "Вт", value: 7 },
-  { id: 3, label: "Ср", value: 5 },
-  { id: 4, label: "Чт", value: 9 },
-  { id: 5, label: "Пт", value: 12 },
+  { id: 1, label: "PR", value: 4 },
+  { id: 2, label: "Issues", value: 7 },
+  { id: 3, label: "Fixes", value: 5 },
+  { id: 4, label: "Tests", value: 9 },
+  { id: 5, label: "Docs", value: 3 },
 ]);
 
 const chartHeight = 250;
@@ -272,7 +272,7 @@ const trendLinePoints = computed(() =>
 );
 
 const chartAriaLabel = computed(
-  () => `${title.value || "График"}: пик ${peak.value.value} ${unitLabel.value} в "${peak.value.label}".`,
+  () => `${title.value || "Диаграмма"}: пик ${peak.value.value} ${unitLabel.value} в "${peak.value.label}".`,
 );
 
 function safeValue(value: number): number {
@@ -301,14 +301,16 @@ function removePoint(index: number): void {
 }
 
 function resetChart(): void {
-  title.value = "Новый график";
-  description.value = "";
-  unit.value = "шт.";
-  chartKind.value = "combo";
+  title.value = "GitHub активность";
+  description.value = "Mermaid-диаграмма для README, issues или описания PR.";
+  unit.value = "задач";
+  chartKind.value = "bar";
   points.value = [
-    { id: 1, label: "Янв", value: 10 },
-    { id: 2, label: "Фев", value: 16 },
-    { id: 3, label: "Мар", value: 13 },
+    { id: 1, label: "PR", value: 4 },
+    { id: 2, label: "Issues", value: 7 },
+    { id: 3, label: "Fixes", value: 5 },
+    { id: 4, label: "Tests", value: 9 },
+    { id: 5, label: "Docs", value: 3 },
   ];
 }
 
@@ -323,9 +325,9 @@ function createMarkdownBlock(): string {
   const chartLines = [
     "```mermaid",
     "xychart-beta",
-    `    title "${escapeMermaidText(title.value.trim() || "График")}"`,
+    `    title "${escapeMermaidText(title.value.trim() || "Диаграмма")}"`,
     `    x-axis [${labels}]`,
-    `    y-axis "${escapeMermaidText(unitLabel.value)}" 0 --> ${yMax.value}`,
+    `    y-axis 0 --> ${yMax.value}`,
   ];
 
   if (chartKind.value !== "line") {
@@ -339,87 +341,85 @@ function createMarkdownBlock(): string {
   chartLines.push("```");
 
   return [
-    blockStart,
-    `## ${title.value.trim() || "График"}`,
+    `## ${title.value.trim() || "Диаграмма"}`,
     caption,
     "",
     ...chartLines,
-    blockEnd,
   ]
     .filter((line, index, list) => line || list[index - 1] !== "")
     .join("\n");
 }
 
-function findChartBlock(content: string): { startIndex: number; endIndex: number; endMarker: string } | null {
-  const startMarkers = [blockStart, legacyBlockStart];
-  const endMarkers = [blockEnd, legacyBlockEnd];
-
-  for (const startMarker of startMarkers) {
-    const startIndex = content.indexOf(startMarker);
-
-    if (startIndex < 0) {
-      continue;
-    }
-
-    for (const endMarker of endMarkers) {
-      const endIndex = content.indexOf(endMarker, startIndex + startMarker.length);
-
-      if (endIndex > startIndex) {
-        return { startIndex, endIndex, endMarker };
-      }
-    }
-  }
-
-  return null;
+function findChartBlocks(content: string): Array<{ startIndex: number; endIndex: number }> {
+  return Array.from(content.matchAll(/```mermaid\nxychart-beta[\s\S]*?\n```/g))
+    .filter((match) => typeof match.index === "number")
+    .map((match) => ({
+      startIndex: match.index ?? 0,
+      endIndex: (match.index ?? 0) + match[0].length,
+    }));
 }
 
-function applyToDocument(): void {
+function appendToDocument(): void {
   const block = createMarkdownBlock();
   const content = editor.content;
-  const existingBlock = findChartBlock(content);
+  const separator = content.trim() ? "\n\n" : "";
 
-  if (existingBlock) {
-    const nextContent = `${content.slice(0, existingBlock.startIndex)}${block}${content.slice(
-      existingBlock.endIndex + existingBlock.endMarker.length,
-    )}`;
-    editor.setContent(nextContent);
-  } else {
-    const separator = content.trim() ? "\n\n" : "";
-    editor.setContent(`${content.trimEnd()}${separator}${block}\n`);
-  }
-
-  editor.statusMessage = "График вставлен в Markdown-файл";
+  editor.setContent(`${content.trimEnd()}${separator}${block}\n`);
+  editor.statusMessage = "Диаграмма добавлена в Markdown-файл";
 }
 
-function loadFromDocument(): void {
-  const existingBlock = findChartBlock(editor.content);
+function importRows(): void {
+  const rows = importText.value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const [labelPart, valuePart] = line.split(/[,;\t]/);
+      const fallbackParts = line.split(/\s+/);
+      const label = (valuePart === undefined ? fallbackParts.slice(0, -1).join(" ") : labelPart).trim();
+      const value = valuePart === undefined ? fallbackParts[fallbackParts.length - 1] : valuePart;
 
-  if (!existingBlock) {
-    editor.statusMessage = "В текущем файле еще нет блока графика";
+      return {
+        id: index + 1,
+        label: label || `Точка ${index + 1}`,
+        value: safeValue(Number(String(value).replace(",", "."))),
+      };
+    });
+
+  if (!rows.length) {
+    editor.statusMessage = "Нет строк для импорта";
     return;
   }
 
-  const block = editor.content.slice(existingBlock.startIndex, existingBlock.endIndex);
+  points.value = rows;
+  editor.statusMessage = "Данные диаграммы обновлены";
+}
+
+function loadFromDocument(): void {
+  const chartBlocks = findChartBlocks(editor.content);
+  const existingBlock = chartBlocks[chartBlocks.length - 1];
+
+  if (!existingBlock) {
+    editor.statusMessage = "В текущем файле еще нет Mermaid-диаграммы";
+    return;
+  }
+
+  const chartBlock = editor.content.slice(existingBlock.startIndex, existingBlock.endIndex);
+  const headingStart = editor.content.lastIndexOf("\n## ", existingBlock.startIndex);
+  const blockStart = headingStart >= 0 ? headingStart + 1 : existingBlock.startIndex;
+  const block = editor.content.slice(blockStart, existingBlock.endIndex);
   const heading = block.match(/^##\s+(.+)$/m);
-  const unitMatch = block.match(/^\|\s*Подпись\s*\|\s*Значение,\s*([^|]+)\|$/m);
-  const tableRows = Array.from(block.matchAll(/^\|\s*([^|\n]+?)\s*\|\s*(\d+(?:\.\d+)?)\s*\|$/gm))
-    .filter((match) => !match[1].includes("---") && !match[1].includes("Подпись"));
-  const mermaidLabels = block.match(/x-axis\s+\[([^\]]+)\]/);
-  const mermaidBars = block.match(/^\s*bar\s+\[([^\]]+)\]/m);
-  const mermaidLine = block.match(/^\s*line\s+\[([^\]]+)\]/m);
-  const mermaidUnit = block.match(/y-axis\s+"([^"]+)"/);
+  const mermaidLabels = chartBlock.match(/x-axis\s+\[([^\]]+)\]/);
+  const mermaidBars = chartBlock.match(/^\s*bar\s+\[([^\]]+)\]/m);
+  const mermaidLine = chartBlock.match(/^\s*line\s+\[([^\]]+)\]/m);
+  const mermaidTitle = chartBlock.match(/title\s+"([^"]+)"/);
+  const mermaidUnit = chartBlock.match(/y-axis\s+"([^"]+)"/);
   const mermaidValues = mermaidBars?.[1] ?? mermaidLine?.[1] ?? "";
 
-  title.value = heading?.[1]?.trim() || title.value;
-  unit.value = unitMatch?.[1]?.trim() || mermaidUnit?.[1]?.trim() || unit.value;
+  title.value = heading?.[1]?.trim() || mermaidTitle?.[1]?.trim() || title.value;
+  unit.value = mermaidUnit?.[1]?.trim() || unit.value;
 
-  if (tableRows.length) {
-    points.value = tableRows.map((match, index) => ({
-      id: index + 1,
-      label: match[1].trim(),
-      value: safeValue(Number(match[2])),
-    }));
-  } else if (mermaidLabels?.[1] && mermaidValues) {
+  if (mermaidLabels?.[1] && mermaidValues) {
     const labels = Array.from(mermaidLabels[1].matchAll(/"([^"]+)"/g)).map((match) => match[1]);
     const values = mermaidValues.split(",").map((value) => safeValue(Number(value.trim())));
 
@@ -434,8 +434,12 @@ function loadFromDocument(): void {
 
   const descriptionMatch = block.match(/^##\s+.+\n([\s\S]*?)\n```mermaid/m);
   description.value = descriptionMatch?.[1]?.trim() ?? description.value;
-  editor.statusMessage = "График загружен из Markdown-файла";
+  editor.statusMessage = "Диаграмма загружена из Markdown-файла";
 }
 
-onMounted(loadFromDocument);
+onMounted(() => {
+  if (findChartBlocks(editor.content).length) {
+    loadFromDocument();
+  }
+});
 </script>
