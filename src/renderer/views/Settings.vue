@@ -105,11 +105,11 @@ const settingsStore = useSettingsStore();
 const draft = reactive<AppSettings>({
   theme: "system",
   fontSize: 16,
-  editorFontFamily: "mono",
-  editorLineHeight: 1.7,
+  editorFontFamily: "sans",
+  editorLineHeight: 1.75,
   editorWordWrap: false,
   previewFontSize: 16,
-  previewLineHeight: 1.72,
+  previewLineHeight: 1.78,
   windowBounds: {
     width: 1280,
     height: 820,

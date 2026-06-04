@@ -74,8 +74,8 @@
           :value="settingsStore.settings.editorFontFamily"
           @change="updateTextSetting('editorFontFamily', ($event.target as HTMLSelectElement).value)"
         >
+          <option value="sans">Segoe UI</option>
           <option value="mono">Моно</option>
-          <option value="sans">Без засечек</option>
           <option value="serif">С засечками</option>
         </select>
       </label>

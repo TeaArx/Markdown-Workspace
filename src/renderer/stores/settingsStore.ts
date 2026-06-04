@@ -3,11 +3,11 @@ import { defineStore } from 'pinia';
 const fallbackSettings: AppSettings = {
   theme: 'system',
   fontSize: 16,
-  editorFontFamily: 'mono',
-  editorLineHeight: 1.7,
+  editorFontFamily: 'sans',
+  editorLineHeight: 1.75,
   editorWordWrap: false,
   previewFontSize: 16,
-  previewLineHeight: 1.72,
+  previewLineHeight: 1.78,
   windowBounds: {
     width: 1400,
     height: 900,
@@ -56,14 +56,14 @@ function mergeSettings(settings: AppSettings, patch: Partial<AppSettings>): AppS
 
 function resolveEditorFontFamily(fontFamily: string): string {
   if (fontFamily === 'sans') {
-    return 'Inter, ui-sans-serif, system-ui, sans-serif';
+    return '"Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif';
   }
 
   if (fontFamily === 'serif') {
     return 'Georgia, "Times New Roman", serif';
   }
 
-  return '"Cascadia Code", "Fira Code", Consolas, monospace';
+  return '"Cascadia Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace';
 }
 
 export const useSettingsStore = defineStore('settings', {
