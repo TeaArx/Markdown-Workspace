@@ -1,12 +1,20 @@
 export const IPC_CHANNELS = {
   APP_GET_VERSION: 'app:getVersion',
   APP_QUIT: 'app:quit',
+  APP_INSTALL_UPDATE: 'app:installUpdate',
 
   FILE_NEW: 'file:new',
   FILE_OPEN: 'file:open',
   FILE_OPEN_PATH: 'file:openPath',
   FILE_SAVE: 'file:save',
   FILE_SAVE_AS: 'file:saveAs',
+
+  GIT_STATUS: 'git:status',
+  GIT_DIFF: 'git:diff',
+
+  PROJECTS_LIST: 'projects:list',
+  PROJECTS_PICK_ROOT: 'projects:pickRoot',
+  PROJECTS_LIST_FILES: 'projects:listFiles',
 
   SETTINGS_GET: 'settings:get',
   SETTINGS_UPDATE: 'settings:update',

@@ -26,6 +26,7 @@ function onSafeEvent<T>(channel: string, callback: (payload: T) => void): () => 
 contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   quitApp: () => ipcRenderer.invoke(IPC_CHANNELS.APP_QUIT),
+  installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP_INSTALL_UPDATE),
 
   openFile: () => ipcRenderer.invoke(IPC_CHANNELS.FILE_OPEN),
   openFileByPath: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.FILE_OPEN_PATH, filePath),
@@ -33,6 +34,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke(IPC_CHANNELS.FILE_SAVE, { content, filePath }),
   saveFileAs: (content: string, filePath?: string | null) =>
     ipcRenderer.invoke(IPC_CHANNELS.FILE_SAVE_AS, { content, filePath }),
+
+  git: {
+    status: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_STATUS, filePath),
+    diff: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_DIFF, filePath),
+  },
+
+  projects: {
+    list: (rootPath?: string | null) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_LIST, rootPath),
+    pickRoot: () => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_PICK_ROOT),
+    listFiles: (projectPath: string) => ipcRenderer.invoke(IPC_CHANNELS.PROJECTS_LIST_FILES, projectPath),
+  },
 
   getSettings: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET),
   updateSettings: (patch: unknown) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_UPDATE, patch),

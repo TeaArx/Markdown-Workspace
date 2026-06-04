@@ -46,6 +46,37 @@ declare global {
     autosave: boolean;
     openLastFileOnStart: boolean;
     pomodoroMinutes: number;
+    gitIntegrationEnabled: boolean;
+  }
+
+  interface GitFileStatus {
+    isRepository: boolean;
+    repoRoot: string | null;
+    branch: string | null;
+    filePath: string;
+    relativePath: string | null;
+    statusCode: string | null;
+    statusLabel: string;
+    isDirty: boolean;
+  }
+
+  interface GitProject {
+    name: string;
+    path: string;
+    branch: string;
+    isDirty: boolean;
+  }
+
+  interface ProjectFile {
+    name: string;
+    path: string;
+    relativePath: string;
+  }
+
+  interface ProjectsListResult {
+    rootPath: string;
+    rootExists: boolean;
+    projects: GitProject[];
   }
 
   interface NoteRecord {
@@ -61,11 +92,23 @@ declare global {
   interface ElectronAPI {
     getAppVersion: () => Promise<string>;
     quitApp: () => Promise<boolean>;
+    installUpdate: () => Promise<boolean>;
 
     openFile: () => Promise<OpenFileResult | null>;
     openFileByPath: (filePath: string) => Promise<OpenFileResult>;
     saveFile: (content: string, filePath?: string | null) => Promise<SaveFileResult | null>;
     saveFileAs: (content: string, filePath?: string | null) => Promise<SaveFileResult | null>;
+
+    git: {
+      status: (filePath: string) => Promise<GitFileStatus>;
+      diff: (filePath: string) => Promise<string>;
+    };
+
+    projects: {
+      list: (rootPath?: string | null) => Promise<ProjectsListResult>;
+      pickRoot: () => Promise<ProjectsListResult | null>;
+      listFiles: (projectPath: string) => Promise<ProjectFile[]>;
+    };
 
     getSettings: () => Promise<AppSettings>;
     updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;

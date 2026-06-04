@@ -107,7 +107,7 @@ function configureMermaid(): void {
       tertiaryBorderColor: isDark ? "#465047" : "#ddd4c7",
       lineColor: isDark ? "#9ee3d5" : "#076b60",
       textColor: isDark ? "#f4f0e8" : "#1e2422",
-      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+      fontFamily: '"Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif',
       xyChart: {
         backgroundColor: isDark ? "#242927" : "#ffffff",
         titleColor: isDark ? "#f4f0e8" : "#1e2422",
