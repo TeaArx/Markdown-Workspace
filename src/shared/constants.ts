@@ -11,6 +11,10 @@ export const IPC_CHANNELS = {
   GIT_STATUS: 'git:status',
   GIT_DIFF: 'git:diff',
 
+  PROJECTS_LIST: 'projects:list',
+  PROJECTS_PICK_ROOT: 'projects:pickRoot',
+  PROJECTS_LIST_FILES: 'projects:listFiles',
+
   SETTINGS_GET: 'settings:get',
   SETTINGS_UPDATE: 'settings:update',
   SETTINGS_RESET: 'settings:reset',

@@ -5,6 +5,7 @@ import { IPC_CHANNELS } from '../shared/constants';
 import { registerFileHandlers } from './ipc/fileHandlers';
 import { registerGitHandlers } from './ipc/gitHandlers';
 import { registerNotesHandlers } from './ipc/notesHandlers';
+import { registerProjectsHandlers } from './ipc/projectsHandlers';
 import { registerSettingsHandlers } from './ipc/settingsHandlers';
 import { registerWindowHandlers } from './ipc/windowHandlers';
 import { createTray } from './tray/tray';
@@ -100,6 +101,7 @@ if (!gotSingleInstanceLock) {
     registerFileHandlers();
     registerGitHandlers();
     registerNotesHandlers();
+    registerProjectsHandlers();
     registerWindowHandlers({
       getMainWindow,
       showMainWindow,

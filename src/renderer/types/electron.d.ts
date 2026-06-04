@@ -60,6 +60,25 @@ declare global {
     isDirty: boolean;
   }
 
+  interface GitProject {
+    name: string;
+    path: string;
+    branch: string;
+    isDirty: boolean;
+  }
+
+  interface ProjectFile {
+    name: string;
+    path: string;
+    relativePath: string;
+  }
+
+  interface ProjectsListResult {
+    rootPath: string;
+    rootExists: boolean;
+    projects: GitProject[];
+  }
+
   interface NoteRecord {
     id: number;
     title: string;
@@ -82,6 +101,12 @@ declare global {
     git: {
       status: (filePath: string) => Promise<GitFileStatus>;
       diff: (filePath: string) => Promise<string>;
+    };
+
+    projects: {
+      list: (rootPath?: string | null) => Promise<ProjectsListResult>;
+      pickRoot: () => Promise<ProjectsListResult | null>;
+      listFiles: (projectPath: string) => Promise<ProjectFile[]>;
     };
 
     getSettings: () => Promise<AppSettings>;
