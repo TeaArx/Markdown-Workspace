@@ -1,7 +1,7 @@
 {
   "name": "my-electron-vue-app",
   "productName": "Markdown Workspace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A desktop Markdown editor built with Electron, Vue, secure IPC, JSON settings and local notes.",
   "main": ".webpack/main",
   "private": true,
