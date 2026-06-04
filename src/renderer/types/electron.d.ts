@@ -92,6 +92,7 @@ declare global {
   interface ElectronAPI {
     getAppVersion: () => Promise<string>;
     quitApp: () => Promise<boolean>;
+    installUpdate: () => Promise<boolean>;
 
     openFile: () => Promise<OpenFileResult | null>;
     openFileByPath: (filePath: string) => Promise<OpenFileResult>;

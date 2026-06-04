@@ -26,6 +26,7 @@ function onSafeEvent<T>(channel: string, callback: (payload: T) => void): () => 
 contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   quitApp: () => ipcRenderer.invoke(IPC_CHANNELS.APP_QUIT),
+  installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP_INSTALL_UPDATE),
 
   openFile: () => ipcRenderer.invoke(IPC_CHANNELS.FILE_OPEN),
   openFileByPath: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.FILE_OPEN_PATH, filePath),
