@@ -1,0 +1,4 @@
+provider: github
+owner: TeaArx
+repo: Markdown-Workspace
+updaterCacheDirName: markdown-workspace-updater

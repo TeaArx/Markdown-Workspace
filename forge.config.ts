@@ -12,6 +12,7 @@ const config: ForgeConfig = {
     asar: true,
     executableName: 'markdown-workspace',
     icon: './assets/icon',
+    extraResource: ['./build/app-update.yml'],
   },
   rebuildConfig: {},
   makers: [],
