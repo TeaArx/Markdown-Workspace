@@ -1,7 +1,7 @@
 {
   "name": "my-electron-vue-app",
   "productName": "Markdown Workspace",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A desktop Markdown editor built with Electron, Vue, secure IPC, JSON settings and local notes.",
   "main": ".webpack/main",
   "private": true,
@@ -9,8 +9,11 @@
     "start": "electron-forge start",
     "build": "electron-forge package",
     "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
+    "make": "npm run dist:win",
+    "dist": "npm run dist:win",
+    "write-update-config": "node scripts/write-update-config.cjs",
+    "dist:win": "npm run package && npm run write-update-config && electron-builder --win nsis --x64 --prepackaged \"out/Markdown Workspace-win32-x64\"",
+    "publish": "npm run package && npm run write-update-config && electron-builder --win nsis --x64 --prepackaged \"out/Markdown Workspace-win32-x64\" --publish always",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
@@ -21,14 +24,9 @@
   "license": "MIT",
   "devDependencies": {
     "@electron-forge/cli": "^7.11.2",
-    "@electron-forge/maker-deb": "^7.11.2",
-    "@electron-forge/maker-rpm": "^7.11.2",
-    "@electron-forge/maker-squirrel": "^7.11.2",
-    "@electron-forge/maker-zip": "^7.11.2",
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.2",
     "@electron-forge/plugin-fuses": "^7.11.2",
     "@electron-forge/plugin-webpack": "^7.11.2",
-    "@electron-forge/publisher-github": "^7.11.2",
     "@electron/fuses": "^1.8.0",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
@@ -36,6 +34,7 @@
     "@vue/compiler-sfc": "^3.5.34",
     "css-loader": "^6.11.0",
     "electron": "42.2.0",
+    "electron-builder": "^26.8.1",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "fork-ts-checker-webpack-plugin": "^7.3.0",
@@ -46,13 +45,58 @@
     "vue-loader": "^17.4.2"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.8.3",
     "highlight.js": "^11.11.1",
     "markdown-it": "^14.2.0",
     "mermaid": "^11.15.0",
     "pinia": "^3.0.4",
-    "update-electron-app": "^3.2.0",
     "vue": "^3.5.34",
     "vue-router": "^5.0.7"
+  },
+  "build": {
+    "appId": "com.markdown-workspace.app",
+    "productName": "Markdown Workspace",
+    "artifactName": "Markdown-Workspace-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "installerSidebar": "assets/installerSidebar.bmp",
+      "uninstallerSidebar": "assets/installerSidebar.bmp",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Markdown Workspace",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "displayLanguageSelector": false,
+      "language": "1049"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "TeaArx",
+        "repo": "Markdown-Workspace",
+        "releaseType": "release"
+      }
+    ]
   }
 }

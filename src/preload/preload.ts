@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   quitApp: () => ipcRenderer.invoke(IPC_CHANNELS.APP_QUIT),
   installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP_INSTALL_UPDATE),
+  onUpdateProgress: (callback: (payload: { percent?: number; label?: string }) => void) => {
+    return onSafeEvent(IPC_CHANNELS.APP_UPDATE_PROGRESS, callback);
+  },
 
   openFile: () => ipcRenderer.invoke(IPC_CHANNELS.FILE_OPEN),
   openFileByPath: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.FILE_OPEN_PATH, filePath),

@@ -1,5 +1,6 @@
 import { BrowserWindow } from "electron";
 
+import { IPC_CHANNELS } from "../../shared/constants";
 import { windowIconPath } from "../assets";
 
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -8,7 +9,8 @@ export type InstallExperienceMode =
   | "install"
   | "updated"
   | "update-download"
-  | "update-ready";
+  | "update-ready"
+  | "update-error";
 
 interface InstallExperienceOptions {
   mode: InstallExperienceMode;
@@ -33,6 +35,7 @@ const modeCopy: Record<InstallExperienceMode, {
     detail: "Создаем ярлыки, подготавливаем рабочую папку и проверяем настройки перед первым запуском.",
     progressLabel: "Настройка приложения",
     finalLabel: "Готово к работе",
+    action: "Открыть приложение",
   },
   updated: {
     eyebrow: "Markdown Workspace",
@@ -40,6 +43,7 @@ const modeCopy: Record<InstallExperienceMode, {
     detail: "Применяем новую версию и обновляем рабочее окружение приложения.",
     progressLabel: "Применение обновления",
     finalLabel: "Новая версия готова",
+    action: "Открыть приложение",
   },
   "update-download": {
     eyebrow: "Markdown Workspace",
@@ -57,6 +61,14 @@ const modeCopy: Record<InstallExperienceMode, {
     action: "Перезапустить и установить",
     secondary: "Позже",
   },
+  "update-error": {
+    eyebrow: "Markdown Workspace",
+    title: "Обновление не удалось",
+    detail: "Не получилось скачать или проверить новую версию. Можно продолжить работу и попробовать позже.",
+    progressLabel: "Проверка обновления",
+    finalLabel: "Нужно повторить позже",
+    action: "Продолжить",
+  },
 };
 
 function escapeHtml(value: string): string {
@@ -70,11 +82,14 @@ function escapeHtml(value: string): string {
 
 function createInstallExperienceHtml(options: InstallExperienceOptions): string {
   const copy = modeCopy[options.mode];
-  const isActionable = options.mode === "update-ready";
+  const hasAction = Boolean(copy.action);
   const targetProgress = options.mode === "update-download" ? 92 : 100;
   const releaseTitle = options.releaseName ? `<p class="release">${escapeHtml(options.releaseName)}</p>` : "";
   const releaseNotes = options.releaseNotes
     ? `<div class="notes">${escapeHtml(options.releaseNotes).slice(0, 900)}</div>`
+    : "";
+  const secondaryButton = copy.secondary
+    ? `<button type="button" data-later>${escapeHtml(copy.secondary)}</button>`
     : "";
 
   return `<!doctype html>
@@ -287,7 +302,7 @@ function createInstallExperienceHtml(options: InstallExperienceOptions): string 
       }
 
       .actions {
-        display: ${isActionable ? "flex" : "none"};
+        display: ${hasAction ? "flex" : "none"};
         flex-wrap: wrap;
         gap: 10px;
       }
@@ -343,7 +358,7 @@ function createInstallExperienceHtml(options: InstallExperienceOptions): string 
         </section>
         <section class="actions">
           <button class="primary" type="button" data-install>${escapeHtml(copy.action ?? "")}</button>
-          <button type="button" data-later>${escapeHtml(copy.secondary ?? "")}</button>
+          ${secondaryButton}
         </section>
       </main>
     </div>
@@ -377,6 +392,16 @@ function createInstallExperienceHtml(options: InstallExperienceOptions): string 
         }, 240);
       }
 
+      window.electronAPI?.onUpdateProgress?.((payload) => {
+        if (typeof payload?.percent === "number") {
+          setProgress(payload.percent);
+        }
+
+        if (typeof payload?.label === "string" && payload.label.length > 0) {
+          label.textContent = payload.label;
+        }
+      });
+
       document.querySelector("[data-close]")?.addEventListener("click", () => {
         window.electronAPI?.closeCurrentWindow?.();
       });
@@ -386,7 +411,12 @@ function createInstallExperienceHtml(options: InstallExperienceOptions): string 
       });
 
       document.querySelector("[data-install]")?.addEventListener("click", () => {
-        window.electronAPI?.installUpdate?.();
+        if (mode === "update-ready") {
+          window.electronAPI?.installUpdate?.();
+          return;
+        }
+
+        window.electronAPI?.closeCurrentWindow?.();
       });
     </script>
   </body>
@@ -435,5 +465,11 @@ export function createInstallExperienceWindow(options: InstallExperienceOptions)
 export function closeInstallExperienceWindow(): void {
   if (installExperienceWindow && !installExperienceWindow.isDestroyed()) {
     installExperienceWindow.close();
+  }
+}
+
+export function setInstallExperienceProgress(payload: { percent?: number; label?: string }): void {
+  if (installExperienceWindow && !installExperienceWindow.isDestroyed()) {
+    installExperienceWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_PROGRESS, payload);
   }
 }

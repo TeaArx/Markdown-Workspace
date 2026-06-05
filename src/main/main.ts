@@ -1,8 +1,8 @@
-import { spawn } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 
-import { BrowserWindow, Menu, Notification, app, autoUpdater, ipcMain } from 'electron';
-import { UpdateSourceType, updateElectronApp } from 'update-electron-app';
+import { BrowserWindow, Menu, Notification, app, ipcMain } from 'electron';
+import { autoUpdater, type ProgressInfo, type UpdateInfo } from 'electron-updater';
 
 import { IPC_CHANNELS } from '../shared/constants';
 import { registerFileHandlers } from './ipc/fileHandlers';
@@ -12,112 +12,161 @@ import { registerProjectsHandlers } from './ipc/projectsHandlers';
 import { registerSettingsHandlers } from './ipc/settingsHandlers';
 import { registerWindowHandlers } from './ipc/windowHandlers';
 import { createTray } from './tray/tray';
-import { closeInstallExperienceWindow, createInstallExperienceWindow } from './windows/installExperience';
+import {
+  closeInstallExperienceWindow,
+  createInstallExperienceWindow,
+  setInstallExperienceProgress,
+} from './windows/installExperience';
 import { createMainWindow } from './windows/mainWindow';
 
-type SquirrelCommand = '--squirrel-install' | '--squirrel-updated' | '--squirrel-uninstall' | '--squirrel-obsolete';
+const UPDATE_CHECK_DELAY_MS = 4500;
 
-function runSquirrelCommand(args: string[], done: () => void): void {
-  const updateExe = path.resolve(path.dirname(process.execPath), '..', 'Update.exe');
-  const child = spawn(updateExe, args, { detached: true });
-
-  child.on('close', done);
-  child.on('error', done);
+interface VersionState {
+  version?: string;
 }
 
-function getSquirrelCommand(): SquirrelCommand | null {
-  if (process.platform !== 'win32') {
-    return null;
+function getStartupExperienceModeFromArgs(args: string[]): 'install' | 'updated' | null {
+  if (args.includes('--install-welcome')) {
+    return 'install';
   }
 
-  const command = process.argv[1];
-
-  if (
-    command === '--squirrel-install' ||
-    command === '--squirrel-updated' ||
-    command === '--squirrel-uninstall' ||
-    command === '--squirrel-obsolete'
-  ) {
-    return command;
+  if (args.includes('--updated-welcome')) {
+    return 'updated';
   }
 
   return null;
 }
 
-function launchInstalledApp(mode: 'install' | 'updated'): void {
-  const target = path.basename(process.execPath);
-  const launchArg = mode === 'install' ? '--install-welcome' : '--updated-welcome';
-
-  runSquirrelCommand(
-    [`--processStart=${target}`, `--process-start-args=${launchArg}`],
-    () => app.quit(),
-  );
+function getVersionStatePath(): string {
+  return path.join(app.getPath('userData'), 'version-state.json');
 }
 
-function handleSquirrelStartupEvent(): boolean {
-  const command = getSquirrelCommand();
+function readPreviousVersion(): string | null {
+  try {
+    const rawState = fs.readFileSync(getVersionStatePath(), 'utf8');
+    const state = JSON.parse(rawState) as VersionState;
+    return typeof state.version === 'string' ? state.version : null;
+  } catch {
+    return null;
+  }
+}
 
-  if (!command) {
-    return false;
+function rememberCurrentVersion(): void {
+  try {
+    fs.mkdirSync(app.getPath('userData'), { recursive: true });
+    fs.writeFileSync(
+      getVersionStatePath(),
+      JSON.stringify({ version: app.getVersion(), updatedAt: new Date().toISOString() }, null, 2),
+      'utf8',
+    );
+  } catch {
+    // Version state is cosmetic; startup should continue even if it cannot be persisted.
+  }
+}
+
+function getStartupExperienceMode(): 'install' | 'updated' | null {
+  const argumentMode = getStartupExperienceModeFromArgs(process.argv);
+
+  if (argumentMode) {
+    return argumentMode;
   }
 
-  const target = path.basename(process.execPath);
+  if (!app.isPackaged) {
+    return null;
+  }
 
-  if (command === '--squirrel-install' || command === '--squirrel-updated') {
-    runSquirrelCommand([`--createShortcut=${target}`], () => {
-      launchInstalledApp(command === '--squirrel-install' ? 'install' : 'updated');
+  const previousVersion = readPreviousVersion();
+
+  if (!previousVersion) {
+    return 'install';
+  }
+
+  return previousVersion === app.getVersion() ? null : 'updated';
+}
+
+function normalizeReleaseNotes(releaseNotes: unknown): string {
+  if (typeof releaseNotes === 'string') {
+    return releaseNotes;
+  }
+
+  if (Array.isArray(releaseNotes)) {
+    return releaseNotes
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry;
+        }
+
+        if (entry && typeof entry === 'object' && 'note' in entry) {
+          const note = (entry as { note?: unknown }).note;
+          return typeof note === 'string' ? note : '';
+        }
+
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return '';
+}
+
+let autoUpdatesConfigured = false;
+
+function configureAutoUpdatesOnce(): void {
+  if (autoUpdatesConfigured || !app.isPackaged) {
+    return;
+  }
+
+  autoUpdatesConfigured = true;
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = false;
+  let updateDownloadStarted = false;
+
+  autoUpdater.on('update-available', (info: UpdateInfo) => {
+    updateDownloadStarted = true;
+    createInstallExperienceWindow({
+      mode: 'update-download',
+      releaseName: `Версия ${info.version}`,
+      releaseNotes: normalizeReleaseNotes(info.releaseNotes),
     });
-    return true;
-  }
+    setInstallExperienceProgress({ percent: 3, label: 'Подготовка загрузки обновления' });
 
-  if (command === '--squirrel-uninstall') {
-    runSquirrelCommand([`--removeShortcut=${target}`], () => app.quit());
-    return true;
-  }
-
-  app.quit();
-  return true;
-}
-
-function configureAutoUpdates(): void {
-  autoUpdater.on('update-available', () => {
-    createInstallExperienceWindow({ mode: 'update-download' });
+    autoUpdater.downloadUpdate().catch(() => {
+      createInstallExperienceWindow({ mode: 'update-error' });
+    });
   });
 
   autoUpdater.on('update-not-available', () => {
     closeInstallExperienceWindow();
   });
 
-  autoUpdater.on('error', () => {
+  autoUpdater.on('download-progress', (progress: ProgressInfo) => {
+    setInstallExperienceProgress({
+      percent: progress.percent,
+      label: `Скачиваем обновление: ${Math.round(progress.percent)}%`,
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
+    updateDownloadStarted = false;
     closeInstallExperienceWindow();
+    createInstallExperienceWindow({
+      mode: 'update-ready',
+      releaseName: `Версия ${info.version}`,
+      releaseNotes: normalizeReleaseNotes(info.releaseNotes),
+    });
   });
 
-  updateElectronApp({
-    updateSource: {
-      type: UpdateSourceType.ElectronPublicUpdateService,
-      repo: 'TeaArx/Markdown-Workspace',
-    },
-    onNotifyUser: (info) => {
-      closeInstallExperienceWindow();
-      createInstallExperienceWindow({
-        mode: 'update-ready',
-        releaseName: info.releaseName,
-        releaseNotes: typeof info.releaseNotes === 'string' ? info.releaseNotes : '',
-      });
-    },
+  autoUpdater.on('error', () => {
+    if (updateDownloadStarted) {
+      updateDownloadStarted = false;
+      createInstallExperienceWindow({ mode: 'update-error' });
+    }
   });
-}
 
-function getStartupExperienceMode(): 'install' | 'updated' | null {
-  if (process.argv.includes('--install-welcome')) {
-    return 'install';
-  }
-
-  if (process.argv.includes('--updated-welcome')) {
-    return 'updated';
-  }
-
-  return null;
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch((): void => undefined);
+  }, UPDATE_CHECK_DELAY_MS);
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -147,6 +196,16 @@ function showMainWindow(): BrowserWindow | null {
   return mainWindow;
 }
 
+function showStartupExperience(mode: 'install' | 'updated'): void {
+  rememberCurrentVersion();
+  const installWindow = createInstallExperienceWindow({ mode });
+
+  installWindow.on('closed', () => {
+    showMainWindow();
+    configureAutoUpdatesOnce();
+  });
+}
+
 function registerAppHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => app.getVersion());
 
@@ -157,7 +216,7 @@ function registerAppHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.APP_INSTALL_UPDATE, () => {
     isQuitting = true;
-    autoUpdater.quitAndInstall();
+    autoUpdater.quitAndInstall(false, true);
     return true;
   });
 
@@ -174,20 +233,23 @@ function registerAppHandlers(): void {
   });
 }
 
-const handledSquirrelStartupEvent = handleSquirrelStartupEvent();
-
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.markdown-workspace.app');
 }
 
-const gotSingleInstanceLock = handledSquirrelStartupEvent || app.requestSingleInstanceLock();
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
-if (handledSquirrelStartupEvent) {
-  // Squirrel events are short-lived helper launches. The callbacks above will quit the app.
-} else if (!gotSingleInstanceLock) {
+if (!gotSingleInstanceLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_event, argv) => {
+    const startupExperienceMode = getStartupExperienceModeFromArgs(argv);
+
+    if (startupExperienceMode) {
+      showStartupExperience(startupExperienceMode);
+      return;
+    }
+
     showMainWindow();
   });
 
@@ -211,8 +273,8 @@ if (handledSquirrelStartupEvent) {
 
     Menu.setApplicationMenu(null);
 
-    if (app.isPackaged) {
-      configureAutoUpdates();
+    if (!startupExperienceMode) {
+      configureAutoUpdatesOnce();
     }
 
     createTray({
@@ -224,11 +286,7 @@ if (handledSquirrelStartupEvent) {
     });
 
     if (startupExperienceMode) {
-      createInstallExperienceWindow({ mode: startupExperienceMode });
-      setTimeout(() => {
-        closeInstallExperienceWindow();
-        showMainWindow();
-      }, 3600);
+      showStartupExperience(startupExperienceMode);
       return;
     }
 
