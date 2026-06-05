@@ -2,6 +2,7 @@ export const IPC_CHANNELS = {
   APP_GET_VERSION: 'app:getVersion',
   APP_QUIT: 'app:quit',
   APP_INSTALL_UPDATE: 'app:installUpdate',
+  APP_UPDATE_PROGRESS: 'app:updateProgress',
 
   FILE_NEW: 'file:new',
   FILE_OPEN: 'file:open',
