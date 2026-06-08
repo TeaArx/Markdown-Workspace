@@ -93,6 +93,7 @@ declare global {
     getAppVersion: () => Promise<string>;
     quitApp: () => Promise<boolean>;
     installUpdate: () => Promise<boolean>;
+    cancelUpdateDownload: () => Promise<boolean>;
     onUpdateProgress: (callback: (payload: { percent?: number; label?: string }) => void) => () => void;
 
     openFile: () => Promise<OpenFileResult | null>;

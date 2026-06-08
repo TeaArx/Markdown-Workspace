@@ -47,9 +47,10 @@ const copyByMode: Record<InstallExperienceMode, InstallExperienceCopy> = {
   "update-download": {
     eyebrow: "Markdown Workspace",
     title: "Скачиваем обновление",
-    detail: "Загрузка идет в фоне. Когда новая версия будет готова, появится предложение перезапустить приложение.",
-    progressLabel: "Подготовка обновления",
-    finalLabel: "Почти готово",
+    detail: "Проверяем и скачиваем файл новой версии. Если открыть приложение сейчас, загрузка будет остановлена.",
+    progressLabel: "Подготовка загрузки",
+    finalLabel: "Проверка файла",
+    action: "Открыть приложение",
   },
   "update-ready": {
     eyebrow: "Markdown Workspace",
@@ -371,6 +372,7 @@ function createInstallExperienceHtml(options: InstallExperienceOptions): string 
       const percent = document.querySelector("[data-percent]");
       const label = document.querySelector("[data-label]");
       const steps = Array.from(document.querySelectorAll("[data-step]"));
+      let isClosing = false;
       let progress = mode === "update-ready" ? 100 : 7;
 
       function setProgress(value) {
@@ -405,21 +407,38 @@ function createInstallExperienceHtml(options: InstallExperienceOptions): string 
         }
       });
 
-      document.querySelector("[data-close]")?.addEventListener("click", () => {
+      async function closeWindow(cancelDownload) {
+        if (isClosing) {
+          return;
+        }
+
+        isClosing = true;
+
+        if (cancelDownload) {
+          label.textContent = "Останавливаем загрузку";
+          await window.electronAPI?.cancelUpdateDownload?.().catch(() => false);
+        }
+
         window.electronAPI?.closeCurrentWindow?.();
+      }
+
+      document.querySelector("[data-close]")?.addEventListener("click", () => {
+        closeWindow(mode === "update-download");
       });
 
       document.querySelector("[data-later]")?.addEventListener("click", () => {
-        window.electronAPI?.closeCurrentWindow?.();
+        closeWindow(false);
       });
 
-      document.querySelector("[data-install]")?.addEventListener("click", () => {
+      document.querySelector("[data-install]")?.addEventListener("click", (event) => {
+        event.currentTarget.disabled = true;
+
         if (mode === "update-ready") {
           window.electronAPI?.installUpdate?.();
           return;
         }
 
-        window.electronAPI?.closeCurrentWindow?.();
+        closeWindow(mode === "update-download");
       });
     </script>
   </body>
