@@ -11,9 +11,10 @@ interface TrayOptions {
 }
 
 function createTrayIcon(): Electron.NativeImage {
+  const iconSize = process.platform === "win32" ? 16 : 22;
   const icon = nativeImage.createFromPath(trayIconPath).resize({
-    width: process.platform === "win32" ? 16 : 22,
-    height: process.platform === "win32" ? 16 : 22,
+    width: iconSize,
+    height: iconSize,
   });
 
   if (process.platform === "darwin") {
@@ -31,26 +32,26 @@ export function createTray(options: TrayOptions): Tray {
   tray = new Tray(createTrayIcon());
   tray.setToolTip("Markdown Workspace");
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Показать",
-      click: options.showMainWindow,
-    },
-    {
-      label: "Скрыть",
-      click: () => options.getMainWindow()?.hide(),
-    },
-    { type: "separator" },
-    {
-      label: "Выход",
-      click: () => {
-        app.releaseSingleInstanceLock();
-        options.quit();
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      {
+        label: "Показать",
+        click: options.showMainWindow,
       },
-    },
-  ]);
-
-  tray.setContextMenu(contextMenu);
+      {
+        label: "Скрыть",
+        click: () => options.getMainWindow()?.hide(),
+      },
+      { type: "separator" },
+      {
+        label: "Выход",
+        click: () => {
+          app.releaseSingleInstanceLock();
+          options.quit();
+        },
+      },
+    ]),
+  );
   tray.on("double-click", options.showMainWindow);
 
   return tray;

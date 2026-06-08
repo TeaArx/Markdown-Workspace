@@ -8,7 +8,7 @@ import { IPC_CHANNELS, SUPPORTED_FILE_EXTENSIONS } from '../../shared/constants'
 
 const execFileAsync = promisify(execFile);
 const commandTimeoutMs = 8000;
-const ignoredDirectories = new Set(['.git', 'node_modules', 'out', 'dist', 'build', '.webpack']);
+const ignoredDirectories = new Set(['.git', 'node_modules', 'out', 'dist', 'build']);
 const maxMarkdownFiles = 300;
 
 export interface GitProject {

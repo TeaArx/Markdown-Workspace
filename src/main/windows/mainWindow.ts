@@ -2,10 +2,8 @@ import { BrowserWindow, shell } from "electron";
 
 import { windowIconPath } from "../assets";
 import { readSettings, updateWindowBounds } from "../ipc/settingsHandlers";
+import { getPreloadPath, getRendererUrl } from "./rendererEntry";
 import { getWindowShellOptions } from "./titleBar";
-
-declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
-declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 interface MainWindowOptions {
   shouldQuit: () => boolean;
@@ -43,7 +41,7 @@ export function createMainWindow({
     title: "Markdown Workspace",
     icon: windowIconPath,
     webPreferences: {
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      preload: getPreloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -66,7 +64,7 @@ export function createMainWindow({
     }, 300);
   };
 
-  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+  mainWindow.loadURL(getRendererUrl());
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();

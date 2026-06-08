@@ -1,18 +1,21 @@
 {
-  "name": "my-electron-vue-app",
+  "name": "markdown-workspace",
   "productName": "Markdown Workspace",
   "version": "1.0.2",
   "description": "A desktop Markdown editor built with Electron, Vue, secure IPC, JSON settings and local notes.",
-  "main": ".webpack/main",
+  "main": "out/main/index.js",
   "private": true,
   "scripts": {
-    "start": "electron-forge start",
-    "build": "electron-forge package",
-    "package": "electron-forge package",
-    "make": "npm run dist:win",
+    "start": "electron-vite dev",
+    "build:app": "electron-vite build",
+    "build": "npm run dist",
+    "pack": "npm run build:app && electron-builder --dir --publish never",
+    "package": "npm run pack",
+    "make": "npm run dist",
     "dist": "npm run dist:win",
-    "dist:win": "npm run package && electron-builder --win nsis --x64 --prepackaged \"out/Markdown Workspace-win32-x64\"",
-    "publish": "npm run package && electron-builder --win nsis --x64 --prepackaged \"out/Markdown Workspace-win32-x64\" --publish always",
+    "dist:win": "npm run build:app && electron-builder --win nsis --x64 --publish never",
+    "release": "npm run build:app && electron-builder --win nsis --x64 --publish always",
+    "publish": "npm run release",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
@@ -22,26 +25,17 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@electron-forge/cli": "^7.11.2",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.11.2",
-    "@electron-forge/plugin-fuses": "^7.11.2",
-    "@electron-forge/plugin-webpack": "^7.11.2",
-    "@electron/fuses": "^1.8.0",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "@vercel/webpack-asset-relocator-loader": "^1.7.3",
+    "@vitejs/plugin-vue": "^6.0.7",
     "@vue/compiler-sfc": "^3.5.34",
-    "css-loader": "^6.11.0",
     "electron": "42.2.0",
     "electron-builder": "^26.8.1",
+    "electron-vite": "^5.0.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
-    "fork-ts-checker-webpack-plugin": "^7.3.0",
-    "node-loader": "^2.1.0",
-    "style-loader": "^3.3.4",
-    "ts-loader": "^9.5.7",
     "typescript": "^5.9.3",
-    "vue-loader": "^17.4.2"
+    "vite": "^7.3.5"
   },
   "dependencies": {
     "electron-updater": "^6.8.3",
@@ -56,12 +50,27 @@
     "appId": "com.markdown-workspace.app",
     "productName": "Markdown Workspace",
     "artifactName": "Markdown-Workspace-${version}-${arch}.${ext}",
+    "asar": true,
+    "electronUpdaterCompatibility": ">=2.16",
+    "files": [
+      "out/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
     "directories": {
       "output": "release",
       "buildResources": "assets"
     },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
+    },
     "win": {
-      "icon": "assets/icon.ico",
+      "icon": "icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -76,11 +85,11 @@
       "perMachine": false,
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
-      "installerHeaderIcon": "assets/icon.ico",
-      "installerSidebar": "assets/installerSidebar.bmp",
-      "uninstallerSidebar": "assets/installerSidebar.bmp",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico",
+      "installerSidebar": "installerSidebar.bmp",
+      "uninstallerSidebar": "installerSidebar.bmp",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Markdown Workspace",
@@ -94,6 +103,8 @@
         "provider": "github",
         "owner": "TeaArx",
         "repo": "Markdown-Workspace",
+        "channel": "latest",
+        "publishAutoUpdate": true,
         "releaseType": "release"
       }
     ]
