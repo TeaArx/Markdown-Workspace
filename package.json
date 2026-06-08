@@ -1,7 +1,7 @@
 {
   "name": "markdown-workspace",
   "productName": "Markdown Workspace",
-  "version": "1.0.5",
+  "version": "1.0.4",
   "description": "A desktop Markdown editor built with Electron, Vue, secure IPC, JSON settings and local notes.",
   "main": "out/main/index.js",
   "private": true,
