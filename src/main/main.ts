@@ -14,7 +14,7 @@ import {
   type StartupExperienceMode,
 } from "./startupExperience";
 import { createTray } from "./tray/tray";
-import { configureAutoUpdatesOnce, installDownloadedUpdate } from "./updates";
+import { cancelUpdateDownload, configureAutoUpdatesOnce, installDownloadedUpdate } from "./updates";
 import { createInstallExperienceWindow } from "./windows/installExperience";
 import { createMainWindow } from "./windows/mainWindow";
 
@@ -68,9 +68,13 @@ function registerAppHandlers(): void {
   });
 
   ipcMain.handle(IPC_CHANNELS.APP_INSTALL_UPDATE, () => {
-    isQuitting = true;
-    installDownloadedUpdate();
-    return true;
+    const started = installDownloadedUpdate();
+    isQuitting = started;
+    return started;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.APP_CANCEL_UPDATE_DOWNLOAD, () => {
+    return cancelUpdateDownload();
   });
 
   ipcMain.handle(IPC_CHANNELS.NOTIFY_SHOW, (_event, payload: { title: string; body: string }) => {

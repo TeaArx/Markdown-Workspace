@@ -1,3 +1,4 @@
+import { CancellationError, CancellationToken } from "builder-util-runtime";
 import { autoUpdater, type ProgressInfo, type UpdateInfo } from "electron-updater";
 
 import {
@@ -9,8 +10,11 @@ import {
 const UPDATE_CHECK_DELAY_MS = 4500;
 const INITIAL_DOWNLOAD_PROGRESS = 3;
 
+type UpdateState = "idle" | "checking" | "downloading" | "ready" | "cancelled";
+
 let isConfigured = false;
-let isDownloading = false;
+let updateState: UpdateState = "idle";
+let downloadCancellationToken: CancellationToken | null = null;
 
 function normalizeReleaseNotes(releaseNotes: unknown): string {
   if (typeof releaseNotes === "string") {
@@ -42,26 +46,49 @@ function getReleaseTitle(info: UpdateInfo): string {
   return `Версия ${info.version}`;
 }
 
+function disposeDownloadToken(): void {
+  downloadCancellationToken?.dispose();
+  downloadCancellationToken = null;
+}
+
 function showUpdateDownload(info: UpdateInfo): void {
-  isDownloading = true;
-  createInstallExperienceWindow({
+  if (updateState === "downloading" || updateState === "ready") {
+    return;
+  }
+
+  updateState = "downloading";
+  disposeDownloadToken();
+  downloadCancellationToken = new CancellationToken();
+
+  const downloadWindow = createInstallExperienceWindow({
     mode: "update-download",
     releaseName: getReleaseTitle(info),
     releaseNotes: normalizeReleaseNotes(info.releaseNotes),
   });
+
+  downloadWindow.once("closed", () => {
+    if (updateState === "downloading") {
+      cancelUpdateDownload();
+    }
+  });
+
   setInstallExperienceProgress({
     percent: INITIAL_DOWNLOAD_PROGRESS,
     label: "Подготовка загрузки обновления",
   });
 
-  autoUpdater.downloadUpdate().catch(() => {
-    isDownloading = false;
-    createInstallExperienceWindow({ mode: "update-error" });
+  autoUpdater.downloadUpdate(downloadCancellationToken).catch((error: unknown) => {
+    if (error instanceof CancellationError || updateState === "cancelled") {
+      return;
+    }
+
+    showUpdateError();
   });
 }
 
 function showUpdateReady(info: UpdateInfo): void {
-  isDownloading = false;
+  updateState = "ready";
+  disposeDownloadToken();
   closeInstallExperienceWindow();
   createInstallExperienceWindow({
     mode: "update-ready",
@@ -71,19 +98,43 @@ function showUpdateReady(info: UpdateInfo): void {
 }
 
 function showUpdateError(): void {
-  if (!isDownloading) {
+  if (updateState !== "checking" && updateState !== "downloading") {
     return;
   }
 
-  isDownloading = false;
+  updateState = "idle";
+  disposeDownloadToken();
   createInstallExperienceWindow({ mode: "update-error" });
 }
 
 function updateDownloadProgress(progress: ProgressInfo): void {
+  if (updateState !== "downloading") {
+    return;
+  }
+
   setInstallExperienceProgress({
-    percent: progress.percent,
-    label: `Скачиваем обновление: ${Math.round(progress.percent)}%`,
+    percent: Math.min(progress.percent, 99),
+    label:
+      progress.percent >= 99
+        ? "Проверяем файл обновления"
+        : `Скачиваем обновление: ${Math.round(progress.percent)}%`,
   });
+}
+
+function handleUpdateNotAvailable(): void {
+  if (updateState === "checking") {
+    updateState = "idle";
+  }
+
+  closeInstallExperienceWindow();
+}
+
+function handleUpdateCancelled(): void {
+  if (updateState !== "cancelled") {
+    updateState = "idle";
+  }
+
+  disposeDownloadToken();
 }
 
 export function configureAutoUpdatesOnce(isPackaged: boolean): void {
@@ -95,17 +146,49 @@ export function configureAutoUpdatesOnce(isPackaged: boolean): void {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
 
+  autoUpdater.on("checking-for-update", () => {
+    if (updateState === "idle") {
+      updateState = "checking";
+    }
+  });
   autoUpdater.on("update-available", showUpdateDownload);
-  autoUpdater.on("update-not-available", closeInstallExperienceWindow);
+  autoUpdater.on("update-not-available", handleUpdateNotAvailable);
   autoUpdater.on("download-progress", updateDownloadProgress);
   autoUpdater.on("update-downloaded", showUpdateReady);
+  autoUpdater.on("update-cancelled", handleUpdateCancelled);
   autoUpdater.on("error", showUpdateError);
 
   setTimeout(() => {
-    autoUpdater.checkForUpdates().catch((): void => undefined);
+    if (updateState !== "idle") {
+      return;
+    }
+
+    autoUpdater.checkForUpdates().catch((): void => {
+      if (updateState === "checking") {
+        updateState = "idle";
+      }
+    });
   }, UPDATE_CHECK_DELAY_MS);
 }
 
-export function installDownloadedUpdate(): void {
+export function cancelUpdateDownload(): boolean {
+  if (updateState !== "downloading" || !downloadCancellationToken) {
+    return false;
+  }
+
+  updateState = "cancelled";
+  setInstallExperienceProgress({
+    label: "Загрузка обновления остановлена",
+  });
+  downloadCancellationToken.cancel();
+  return true;
+}
+
+export function installDownloadedUpdate(): boolean {
+  if (updateState !== "ready") {
+    return false;
+  }
+
   autoUpdater.quitAndInstall(false, true);
+  return true;
 }
