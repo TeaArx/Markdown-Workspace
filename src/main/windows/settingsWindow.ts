@@ -2,10 +2,8 @@ import { BrowserWindow, shell } from "electron";
 
 import { windowIconPath } from "../assets";
 import { readSettings } from "../ipc/settingsHandlers";
+import { getPreloadPath, getRendererUrl } from "./rendererEntry";
 import { getWindowShellOptions } from "./titleBar";
-
-declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
-declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 let settingsWindow: BrowserWindow | null = null;
 
@@ -48,7 +46,7 @@ export function createSettingsWindow(
     icon: windowIconPath,
 
     webPreferences: {
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      preload: getPreloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -57,7 +55,7 @@ export function createSettingsWindow(
 
   settingsWindow.setMenu(null);
 
-  settingsWindow.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}#/settings`);
+  settingsWindow.loadURL(getRendererUrl("#/settings"));
 
   settingsWindow.webContents.on("will-navigate", (event, url) => {
     if (url !== settingsWindow?.webContents.getURL()) {
