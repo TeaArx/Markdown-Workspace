@@ -1,12 +1,6 @@
 # Markdown Workspace
 
-Markdown Workspace is a desktop Markdown editor built with Electron, Vue, Pinia, Markdown-it, Highlight.js and Mermaid. The app supports local file editing, live preview, notes, project charts, notifications and persistent settings.
-
-## Requirements
-
-- Node.js 20 or newer.
-- npm.
-- Windows for the configured NSIS installer target.
+Markdown Workspace is a desktop Markdown editor built with Electron, Vue, Pinia, Markdown-it, Highlight.js and Mermaid.
 
 ## Development
 
@@ -15,7 +9,6 @@ npm ci
 npm start
 ```
 
-`npm start` runs `electron-vite dev`. In development the renderer is served by Vite at `http://localhost:5173/`, and Electron loads that URL in the app window. This localhost URL is expected in development only; packaged builds load `out/renderer/index.html` from disk.
 
 If Electron was installed without its binary, run:
 
@@ -45,31 +38,47 @@ npm run dist
 
 Creates the Windows NSIS installer, blockmap and update metadata in `release/` without publishing.
 
-Expected release files:
+Publish only these files manually:
 
 - `Markdown-Workspace-<version>-x64.exe`
 - `Markdown-Workspace-<version>-x64.exe.blockmap`
 - `latest.yml`
 
+Do not upload these local/debug outputs manually:
+
+- `win-unpacked/`
+- `builder-effective-config.yaml`
+- `builder-debug.yml`
+
 ## Publishing
 
-The recommended release path is GitHub Actions. Push a version tag:
+There are two valid publishing flows. Use one of them, not both.
+
+### Option 1: GitHub Actions
+
+Push a version tag:
 
 ```bash
 git tag v1.0.3
 git push origin v1.0.3
 ```
 
-The `.github/workflows/release.yml` workflow builds and publishes the installer assets to GitHub Releases.
+The tag starts `.github/workflows/release.yml`. The workflow runs `npm run release` on GitHub's Windows runner and publishes the required assets to GitHub Releases.
 
-Manual local publishing is also possible:
+Do not run `npm run dist` before this flow. GitHub Actions builds from a clean checkout.
+
+### Option 2: Local Publish
+
+Run this only if you want to publish from your machine:
 
 ```powershell
 $env:GH_TOKEN="your_github_token"
 npm run release
 ```
 
-`GH_TOKEN` must be a GitHub token with permission to create and upload release assets for this repository.
+`npm run release` builds the app and uploads the required assets directly to GitHub Releases. In this flow you do not need to push a tag first; `electron-builder` can create or update the GitHub release using the version from `package.json`.
+
+For this project, GitHub Actions is preferred because local Windows builds can fail while extracting `winCodeSign` if symbolic links are not allowed.
 
 ## GitHub Actions Secrets
 
@@ -105,7 +114,7 @@ npm start
 
 ### `Cannot create symbolic link` while extracting `winCodeSign`
 
-This is a local Windows permission problem in `electron-builder`, not an app build error. `electron-builder` downloads `winCodeSign-*.7z` and 7-Zip tries to create symbolic links in:
+This is a local Windows permission problem in `electron-builder`, not an app build error. `electron-builder` downloads `winCodeSign-*.7z`, and 7-Zip tries to create symbolic links in:
 
 ```text
 %LOCALAPPDATA%\electron-builder\Cache\winCodeSign
@@ -122,11 +131,9 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder\Cache\winCodeSig
 npm run dist
 ```
 
-For real releases, prefer GitHub Actions because `windows-latest` handles this build environment more reliably.
-
 ## Русский
 
-Markdown Workspace - настольный Markdown-редактор на Electron и Vue. Приложение поддерживает локальные файлы, предпросмотр Markdown, заметки, графики, уведомления и сохранение настроек.
+Markdown Workspace - настольный Markdown-редактор на Electron и Vue.
 
 ### Разработка
 
@@ -135,7 +142,6 @@ npm ci
 npm start
 ```
 
-`localhost:5173` в dev-режиме - это нормально. Его поднимает Vite для renderer-части приложения.
 
 ### Проверки
 
@@ -145,26 +151,40 @@ npm run lint
 npm run build:app
 ```
 
-### Сборка установщика
+### Локальная сборка
 
 ```bash
 npm run dist
 ```
 
-Результат появится в `release/`: NSIS-установщик, blockmap и `latest.yml`.
+Команда только собирает файлы в `release/`, но не публикует их.
 
-### Публикация обновления
+Для ручной загрузки в GitHub Releases нужны только:
 
-Лучший вариант - создать tag `v*` и дать GitHub Actions собрать релиз:
+- `.exe`
+- `.exe.blockmap`
+- `latest.yml`
+
+`win-unpacked/`, `builder-effective-config.yaml` и `builder-debug.yml` - служебные файлы, их загружать не нужно.
+
+### Публикация
+
+Есть два варианта. Используйте один, не оба сразу.
+
+Вариант 1 - GitHub Actions:
 
 ```bash
 git tag v1.0.3
 git push origin v1.0.3
 ```
 
-Локальная публикация возможна через:
+Tag запускает workflow. Workflow сам выполнит `npm run release` на GitHub runner. Перед этим не нужно запускать `npm run dist`.
+
+Вариант 2 - локальная публикация:
 
 ```powershell
 $env:GH_TOKEN="your_github_token"
 npm run release
 ```
+
+В этом варианте `npm run release` сам собирает и публикует релиз через токен.
